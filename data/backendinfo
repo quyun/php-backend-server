@@ -1,0 +1,20 @@
+[
+  {
+    "jobname":"test1",
+    "jobpath":"\/var\/www\/php-backend\/backend\/test1.php",
+    "writelog":true,
+    "autostart":true
+  },
+  {
+    "jobname":"test2",
+    "jobpath":"\/var\/www\/php-backend\/backend\/test2.php",
+    "writelog":false,
+    "autostart":true
+  },
+  {
+    "jobname":"test3",
+    "jobpath":"\/var\/www\/php-backend\/backend\/test3.php",
+    "writelog":true,
+    "autostart":false
+  }
+]

@@ -6,3 +6,6 @@ $server_port = 13123;
 
 // 时区设置
 date_default_timezone_set('Asia/Shanghai');
+
+//日志路径设置
+$logpath = '/var/www/php-backend/data/log/';

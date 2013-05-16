@@ -1,0 +1,37 @@
+body {
+	padding-top: 60px;
+	padding-bottom: 40px;
+}
+
+
+.font-white{
+	color:#FFFFFF;
+}
+.background-gray{
+}
+
+.interval{
+	margin-left:5px;
+}
+
+.common-height{
+	height:550px;
+}
+
+.well-deep{
+    border: 1px solid #E3E3E3;
+    border-radius: 4px 4px 4px 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) inset;
+    margin-bottom: 20px;
+    min-height: 20px;
+    padding: 19px;
+}
+
+
+.table th, .table td {
+    border-top: 1px solid #DDDDDD;
+    line-height: 20px;
+    padding: 4px;
+    text-align: left;
+    vertical-align: middle;
+}

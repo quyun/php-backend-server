@@ -103,6 +103,13 @@ class SharedMemory
 
 			return shm_get_var($this->shm_id, $varkey);
 		}
+		
+		public function has_var($varname)
+		{
+			$varkey = $this->_gen_key($varname);
+
+			return shm_has_var($this->shm_id, $varkey);
+		}
 
 		/*
 		 * 从共享内存中删除变量
