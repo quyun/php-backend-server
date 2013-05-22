@@ -49,7 +49,8 @@
             <div class="span3 well">
                 <ul class="nav nav-list">
 					<li class="nav-header">后台进程管理</li>
-					<li <?php if ($method=='list_backend') echo 'class="active"'; ?>><a href="<?php echo router_url($class, 'list_backend'); ?>">进程列表</a></li>
+					<li <?php if ($method=='list_backend') echo 'class="active"'; ?>><a href="<?php echo router_url('backends', 'list_backend'); ?>">进程列表</a></li>
+					<li <?php if ($method=='list_logdir' || $method=='list_logfile') echo 'class="active"'; ?>><a href="<?php echo router_url('logs', 'list_logdir'); ?>">日志列表</a></li>
                 </ul>
             </div>
 			<?php } ?>

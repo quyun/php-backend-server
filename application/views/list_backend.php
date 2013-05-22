@@ -73,6 +73,11 @@
 								<a class="btn-small del_backend" href="#"><i class="icon-trash"></i> 删除</a>
 								<input type="hidden" value="<?php echo $backend['jobname']; ?>" />
 							</li>
+							<li>
+								<a class="btn-small" href="<?php echo router_url('logs', 'list_logdir', array('jobname'=>$backend['jobname'])); ?>">
+									<i class="icon-pencil"></i> 查看日志
+								</a>
+							</li>
 						</ul>
 					</div>
 				</td>

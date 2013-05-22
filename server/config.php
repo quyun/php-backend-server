@@ -9,3 +9,10 @@ date_default_timezone_set('Asia/Shanghai');
 
 //日志路径设置
 $logpath = '/var/www/php-backend/data/log/';
+
+//进程配置文件路径
+$backendinfo_path = '/var/www/php-backend/data/backendinfo';
+
+$hooks = array(
+	'hooks/autostart.php',
+);

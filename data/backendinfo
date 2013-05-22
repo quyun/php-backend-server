@@ -8,13 +8,19 @@
   {
     "jobname":"test2",
     "jobpath":"\/var\/www\/php-backend\/backend\/test2.php",
-    "writelog":false,
-    "autostart":true
+    "writelog":true,
+    "autostart":false
   },
   {
     "jobname":"test3",
     "jobpath":"\/var\/www\/php-backend\/backend\/test3.php",
+    "writelog":false,
+    "autostart":true
+  },
+  {
+    "jobname":"test4",
+    "jobpath":"\/var\/www\/php-backend\/backend\/test4.php",
     "writelog":true,
-    "autostart":false
+    "autostart":true
   }
 ]

@@ -1,9 +1,13 @@
 <?php
 
+require_once(dirname(__FILE__) . '/config.php');
+require_once(dirname(__FILE__) . '/ShareMemory.class.php');
+
 $jobname = 'server';
 
 $php_path = get_php_path();
 $script_cmd = '/var/www/php-backend/server/serverbk.php';
+
 $descriptorspec = array(
 	0 => array("pipe", "r"),
 	1 => array("pipe", "w"),
@@ -29,12 +33,24 @@ else	// 子进程
 	}
 	else if ($ppid)
 	{	
+		//hooks钩子脚本
+		if (isset($hooks) && !empty($hooks))
+		{
+			//server_echo("Hooks Start!\n");
+			sleep(1);
+			foreach ($hooks as $key=>$hook)
+			{
+				include_once($hook);
+				//server_echo("$key: $hook Start Success!\n");
+			}
+			//server_echo("Hooks Completed!\n");
+		}
 		exit;
 	}
 	else
 	{
 		include_once($script_cmd);
-	}	
+	}
 }
 
 
@@ -287,7 +303,11 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 						//把进程所有输出都写日志
 						if ($writelog)
 						{
-							file_put_contents($logpath.$jobname.'_'.date('YmdH'), $output."\n", FILE_APPEND);
+							if (!is_dir($logpath.$jobname.'/'))
+								mkdir($logpath.$jobname.'/', 0777);
+							if (!is_dir($logpath.$jobname.'/'.date('Ymd').'/'))
+								mkdir($logpath.$jobname.'/'.date('Ymd').'/', 0777);
+							file_put_contents($logpath.$jobname.'/'.date('Ymd').'/'.$jobname.'_'.date('YmdH'), $output."\n", FILE_APPEND);
 						}
 						
 						$buffer_lines = $extra_settings[$jobname]['bufferlines'] + 1;

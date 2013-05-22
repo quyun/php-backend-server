@@ -57,11 +57,18 @@ class Backend_model extends Base_Model {
         {
             foreach ($backendlist as $key=>$backend)
             {
-
+                if ($backend['jobname'] === $jobname)
+                {
+                    $backendlist[$key]['jobpath'] = $jobpath;
+                    $backendlist[$key]['writelog'] = $writelog;
+                    $backendlist[$key]['autostart'] = $autostart;
+                }
             }
+            $backendlist = json_indent(json_encode($backendlist));
+            return file_put_contents($this->filepath, $backendlist);
         }
-        else
-            return false;
+
+        return false;
     }
 
     protected function get_backendlist($jobname='')
@@ -71,7 +78,6 @@ class Backend_model extends Base_Model {
             return array();
         $backendlist = file_get_contents($this->filepath);
         $backendlist = json_decode($backendlist, true);
-
         if ($jobname!=='')
         {
             if (!empty($backendlist))

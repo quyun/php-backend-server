@@ -91,6 +91,58 @@ class Backends extends Base_Controller {
 
     }
 
+    public function edit_backend()
+    {
+        $this->load->model('backend_model');
+        $flag = true;
+        $this->data['msg'] = '';
+        $jobname = $this->input->get_post('jobname');
+        if (empty($jobname))
+        {
+            $flag = false;
+            $this->data['msg'] = '进程不存在';
+        }
+
+        $submit_form = $this->input->post('submit_form');
+        if ($submit_form && $flag)
+        {
+            $this->data['form']['jobpath'] = $this->input->post('jobpath');
+            $this->data['form']['writelog'] = $this->input->post('writelog') ? true:false;
+            $this->data['form']['autostart'] = $this->input->post('autostart') ? true:false;
+
+            if ($flag && empty($this->data['form']['jobpath']))
+            {
+                $flag = false;
+                $this->data['msg'] = '进程路径不能为空';
+            }
+            if ($flag && !file_exists($this->data['form']['jobpath']))
+            {
+                $flag = false;
+                $this->data['msg'] = '进程文件不存在';
+            }
+
+
+            if ($flag)
+            {
+                $this->data['form']['jobname'] = $jobname;
+                $rs = $this->backend_model->update_backend($this->data['form']);
+                if ($rs)
+                {
+                    $url = $this->data['base_url'].router_url($this->data['class'], 'list_backend');
+                    redirect($url);
+                }
+                else
+                {
+                    $flag = false;
+                    $this->data['msg'] = '添加进程失败';
+                }
+            }
+        }
+        $this->data['form'] = $this->backend_model->get_backendlist(array('jobname'=>$jobname));
+        $this->load->view('edit_backend', $this->data);
+
+    }
+
     public function json_delbackend()
     {
         $jobname = $this->input->get_post('jobname');

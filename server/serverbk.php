@@ -1,9 +1,6 @@
 <?php
 if (php_sapi_name() != 'cli') die('Server must run under cli mode!');
 
-require_once(dirname(__FILE__) . '/config.php');
-require_once(dirname(__FILE__) . '/ShareMemory.class.php');
-
 // 开始监听
 if (!($sock = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)))
 {
@@ -106,6 +103,7 @@ while (TRUE)
 	}
 
 	server_echo(date('Y-m-d H:i:s e')."\n$cmd $params\n");
+	
 
 	switch ($cmd)
 	{
