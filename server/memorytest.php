@@ -9,7 +9,7 @@ if (!$shm->attach())
 	server_echo("shm attach() failed.\n");
 	exit;
 }
-$rs = $shm->get_var('extra_settings');
+$rs = $shm->get_var('processes');
 var_dump($rs);
 exit;
 

@@ -3,7 +3,7 @@
     "jobname":"test1",
     "jobpath":"\/var\/www\/php-backend\/backend\/test1.php",
     "writelog":true,
-    "autostart":true
+    "autostart":false
   },
   {
     "jobname":"test2",
@@ -15,7 +15,7 @@
     "jobname":"test3",
     "jobpath":"\/var\/www\/php-backend\/backend\/test3.php",
     "writelog":false,
-    "autostart":true
+    "autostart":false
   },
   {
     "jobname":"test4",

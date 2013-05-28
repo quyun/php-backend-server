@@ -111,10 +111,6 @@ function backend_status($jobname)
 	}
 
 	$status = my_proc_get_status($processes[$jobname]);
-	if (file_exists('/proc/'.$processes[$jobname]))
-		$status = true;
-	else
-		$status = false;
 
 	if (!$status)
 	{
