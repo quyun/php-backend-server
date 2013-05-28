@@ -6,7 +6,7 @@ require_once(dirname(__FILE__) . '/ShareMemory.class.php');
 $jobname = 'server';
 
 $php_path = get_php_path();
-$script_cmd = '/var/www/php-backend/server/serverbk.php';
+$script_cmd = $server_path;
 
 $descriptorspec = array(
 	0 => array("pipe", "r"),

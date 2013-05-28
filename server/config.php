@@ -13,6 +13,10 @@ $logpath = '/var/www/php-backend/data/log/';
 //进程配置文件路径
 $backendinfo_path = '/var/www/php-backend/data/backendinfo';
 
+//服务进程路径
+$server_path = '/var/www/php-backend/server/serverbk.php';
+
+
 $hooks = array(
 	'hooks/autostart.php',
 );
