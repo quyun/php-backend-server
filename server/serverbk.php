@@ -56,23 +56,6 @@ else
 	$shm->put_var('extra_settings', $extra_settings);
 }
 
-if ($shm->has_var('child_pids'))
-	$child_pids = $shm->get_var('child_pids');
-else
-{
-	$child_pids = array();
-	$shm->put_var('child_pids', $child_pids);
-}
-
-if ($shm->has_var('pstopping'))
-	$pstopping = $shm->get_var('pstopping');
-else
-{
-	$pstopping = array();
-	$shm->put_var('pstopping', $pstopping);
-}
-
-
 // 循环处理
 while (TRUE)
 {

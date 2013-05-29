@@ -68,31 +68,22 @@ function force_stop_process($jobname)
 	stop_process($jobname, FALSE);
 }
 
-// 优雅结束进程
-function graceful_stop_process($jobname)
-{
-	stop_process($jobname, TRUE);
-}
-
 // 结束进程，并释放相关资源
 function stop_process($jobname, $graceful)
 {
 	global $shm;
 	$processes = $shm->get_var('processes');
 	$extra_settings = $shm->get_var('extra_settings');
-	$child_pids = $shm->get_var('child_pids');
 
 	// 删除共享内存中的缓冲区数据
 	$shm->remove_var($jobname);
 
 	// 强制结束proc_open打开的进程
 	exec('kill -9 '.$processes[$jobname].' 2>/dev/null >&- >/dev/null');
-	exec('kill -9 '.$child_pids[$jobname].' 2>/dev/null >&- >/dev/null');
 	
-	unset($processes[$jobname], $extra_settings[$jobname], $child_pids[$jobname]);
+	unset($processes[$jobname], $extra_settings[$jobname]);
 	$shm->put_var('processes', $processes);
 	$shm->put_var('extra_settings', $extra_settings);
-	$shm->put_var('child_pids', $child_pids);
 }
 
 // 查看进程状态
@@ -142,7 +133,6 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 	global $shm;
 	$processes = $shm->get_var('processes');
 	$extra_settings = $shm->get_var('extra_settings');
-	$child_pids = $shm->get_var('child_pids');
 	
 	// 检查进程名是否已经存在
 	if (isset($processes[$jobname]))
@@ -188,10 +178,7 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 		return FALSE;
 	}
 	else if ($pid)	// 父进程
-	{
-		$child_pids[$jobname] = $pid;
-		$shm->put_var('child_pids', $child_pids);
-		
+	{		
 		socket_write($cnt, 'OK');
 		server_echo("OK\n");
 		
@@ -225,6 +212,8 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 			$php_path = get_php_path();
 			$resource = proc_open("{$php_path} {$script_cmd} {$script_params}", $descriptorspec, $pipes[$jobname], dirname($script_cmd));
 			$tmp_status = proc_get_status($resource);
+			
+			$processes = $shm->get_var('processes');
 			$processes[$jobname] = $tmp_status['pid'];
 			$shm->put_var('processes', $processes);
 			
@@ -239,6 +228,7 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 			$output_pipe = $pipes[$jobname][1];
 			stream_set_blocking($output_pipe, 0);
 
+			$extra_settings = $shm->get_var('extra_settings');
 			// 记录缓冲区行数
 			$extra_settings[$jobname] = array(
 				'bufferlines' => $buffer_lines,
@@ -263,36 +253,40 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 			
 			// 取出共享内存中的输出缓冲
 			$output_buffer = $shm->get_var($jobname);
-
 			while (TRUE)
 			{
 				$read   = array($output_pipe);
 				$write  = NULL;
 				$except = NULL;
 
-				if (FALSE === ($num_changed_streams = stream_select($read, $write, $except, 3)))
+				$num_changed_streams = stream_select($read, $write, $except, 3);
+file_put_contents('/tmp/error20130528.log', $jobname.": ============================================\n", FILE_APPEND);											
+file_put_contents('/tmp/error20130528.log', $jobname." num_changed_streams :".$num_changed_streams."\n", FILE_APPEND);											
+				if (FALSE === $num_changed_streams)
 				{
-					$jobstatus = backend_status($jobname);
-					if ($jobstatus !== 'UP')
+					$jobstatus = my_proc_get_status($processes[$jobname]);
+					if (!$jobstatus)
 					{
+						
 						// 关闭输出管道
 						fclose($pipes[$jobname][1]);
 						// 删除共享内存中的缓冲区数据
 						$shm->remove_var($jobname);
+						
+						$processes = $shm->get_var('processes');
+						$extra_settings = $shm->get_var('extra_settings');
 						//回收资源
-						unset($processes[$jobname], $extra_settings[$jobname], $child_pids[$jobname]);
+						unset($processes[$jobname], $extra_settings[$jobname]);
 						$shm->put_var('processes', $processes);
 						$shm->put_var('extra_settings', $extra_settings);
 						pcntl_waitpid($processes[$jobname], $status);
 						exit;
 					}
-					else
-						continue;
 				}
 				elseif ($num_changed_streams > 0)
 				{
-					$output = stream_get_contents($output_pipe);
-					
+					$output = stream_get_contents($output_pipe);						
+file_put_contents('/tmp/error20130528.log', $jobname." output :".$output."\n", FILE_APPEND);											
 					// 缓存输出
 					if ($output !== '')
 					{
@@ -324,7 +318,30 @@ function backend_start($jobname, $script_cmd, $script_params, $buffer_lines, $wr
 					}
 					else
 					{
-						break;
+						$jobstatus = my_proc_get_status($processes[$jobname]);
+if ($jobstatus)						
+	file_put_contents('/tmp/error20130528.log', $jobname.":true\n", FILE_APPEND);							
+else
+	file_put_contents('/tmp/error20130528.log', $jobname.":false\n", FILE_APPEND);							
+						//if (!$jobstatus)
+						//{
+							// 关闭输出管道
+							fclose($pipes[$jobname][1]);
+							// 删除共享内存中的缓冲区数据
+							$shm->remove_var($jobname);
+							
+							$processes = $shm->get_var('processes');
+							$extra_settings = $shm->get_var('extra_settings');
+							//回收资源
+							unset($processes[$jobname], $extra_settings[$jobname]);
+							$shm->put_var('processes', $processes);
+							$shm->put_var('extra_settings', $extra_settings);
+							
+file_put_contents('/tmp/error20130528.log', $jobname.":111111122222233333333\n", FILE_APPEND);		
+							pcntl_waitpid($processes[$jobname], $status);
+							break;
+						//}
+						
 					}
 				}
 			}
@@ -342,23 +359,6 @@ function backend_stop($jobname, $graceful=FALSE, $is_restart=FALSE)
 	global $shm;
 	global $cnt;
 	$processes = $shm->get_var('processes');
-	$pstopping = $shm->get_var('pstopping');
-	// 优雅方式结束，则直接设置进程结束标志即可
-	if ($graceful)
-	{
-		$pstopping[$jobname] = TRUE;
-		
-		server_echo("Process $jobname receive graceful stop signal.\n");
-	}
-	else
-	{
-		// 清空进程标志
-		if (isset($pstopping[$jobname]))
-		{
-			unset($pstopping[$jobname]);
-		}
-	}
-	$shm->put_var('pstopping', $pstopping);
 
 	if (!isset($processes[$jobname]))
 	{
@@ -382,15 +382,7 @@ function backend_stop($jobname, $graceful=FALSE, $is_restart=FALSE)
 		server_echo("FAILED. (proc_get_status failed.)\n");
 		return FALSE;
 	}
-
-	if ($graceful)
-	{
-		graceful_stop_process($jobname);
-	}
-	else
-	{
-		force_stop_process($jobname);
-	}
+	force_stop_process($jobname);
 
 	if (!$is_restart)
 	{

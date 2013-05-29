@@ -21,6 +21,6 @@
     "jobname":"test4",
     "jobpath":"\/var\/www\/php-backend\/backend\/test4.php",
     "writelog":true,
-    "autostart":true
+    "autostart":false
   }
 ]
