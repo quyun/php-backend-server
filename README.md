@@ -157,13 +157,15 @@ $be = new Backend();
 
 echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
 
-// Array
-// (
-//    [command] => /work/www/test.php
-//    [params] => 
-//    [buffersize] => 20
-//    [writelog] => 1
-// )
+/* 输出示例：
+Array
+(
+    [command] => /work/www/test.php
+    [params] => 
+    [buffersize] => 20
+    [writelog] => 1
+)
+*/
 print_r($be->query('testproc'));
 ```
 
@@ -185,6 +187,7 @@ $be = new Backend();
 
 echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
 
+/* 输出示例：
 Array
 (
     [testproc] => Array
@@ -196,6 +199,7 @@ Array
         )
 
 )
+*/
 print_r($be->queryall());
 ```
 
@@ -311,10 +315,12 @@ require_once('Backend.class.php');
 
 $be = new Backend();
 
-// Array
-// (
-//    [testproc] => UP
-// )
+/* 输出示例：
+Array
+(
+    [testproc] => UP
+)
+*/
 print_r($be->statusall());
 ```
 
@@ -378,10 +384,12 @@ require_once('Backend.class.php');
 
 $be = new Backend();
 
-// Array
-// (
-//     [testproc] => 9464
-// )
+/* 输出示例：
+Array
+(
+    [testproc] => 9464
+)
+*/
 echo $be->memall();
 ```
 
