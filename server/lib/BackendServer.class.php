@@ -42,8 +42,6 @@ class BackendServer
     // 加载插件
     public function load_plugins()
     {
-        $this->server_echo("\n");
-
         if ($handle = opendir($this->plugins_path))
         {
             while (($file = readdir($handle)) != FALSE)
@@ -233,7 +231,7 @@ class BackendServer
             }
         }
 
-        if (in_array($cmd, array('ADD', 'DELETE', 'UPDATE', 'QUERY', 'START', 'STOP', 'RESTART', 'STATUS', 'READ')))
+        if (in_array($cmd, array('ADD', 'DELETE', 'UPDATE', 'QUERY', 'START', 'STOP', 'RESTART', 'STATUS', 'READ', 'MEM')))
         {
             if (!isset($params['jobname']))
             {
@@ -300,6 +298,14 @@ class BackendServer
 
             case 'READ':	// 读取进程缓冲
                 $this->command_read($params['jobname']);
+                break;
+
+            case 'MEM':     // 获取进程内存使用量
+                $this->command_mem($params['jobname']);
+                break;
+
+            case 'MEMALL':  // 获取所有进程的内存使用量
+                $this->command_memall();
                 break;
 
             case 'SERVERMEM':	// 读取服务器内存占用情况
@@ -378,7 +384,7 @@ class BackendServer
     public function command_query($jobname)
     {
         $result = $this->config->get($jobname);
-        $this->socket_write(json_encode($result)."\n");
+        $this->socket_write(json_encode($result));
         return $result;
     }
 
@@ -386,7 +392,7 @@ class BackendServer
     public function command_queryall()
     {
         $result = $this->config->getall();
-        $this->socket_write(json_encode($result)."\n");
+        $this->socket_write(json_encode($result));
         return $result;
     }
 
@@ -603,7 +609,7 @@ class BackendServer
         }
         $this->socket_write(json_encode($statuses));
         
-        return TRUE;
+        return $statuses;
     }
 
     // 读取进程输出缓冲区
@@ -629,7 +635,37 @@ class BackendServer
             $this->socket_write("\n");
         }
         
-        return TRUE;
+        return $output_buffer;
+    }
+
+    // 读取进程内存占用量
+    public function command_mem($jobname)
+    {
+        $pid = $this->shm_process_getpid($jobname);
+        if (!$pid)
+        {
+            // 进程不存在
+            $this->socket_write("0");
+            $this->server_echo("NULL. (process \"$jobname\" does not exist.)\n");
+            return FALSE;
+        }
+
+        $this->socket_write($this->memory_get_usage($pid));
+    }
+
+    // 读取所有进程的内存占用量
+    public function command_memall()
+    {
+        $pids = $this->shm->get_var('pids');
+
+        $usages = array();
+        foreach ($pids as $jobname=>$pid)
+        {
+            $usages[$jobname] = $this->memory_get_usage($pid);
+        }
+        $this->socket_write(json_encode($usages));
+        
+        return $usages;
     }
 
     // 读取服务器输出缓冲区
@@ -641,7 +677,8 @@ class BackendServer
     // 读取服务器内存占用量
     public function command_servermem()
     {
-        $this->socket_write($this->memory_get_usage());
+        $pid = getmypid();
+        $this->socket_write($this->memory_get_usage($pid));
     }
 
     // 获取共享内存中的进程PID
@@ -812,13 +849,13 @@ class BackendServer
     }
 
     // 返回进程占用的实际内存值
-    private function memory_get_usage() 
+    private function memory_get_usage($pid) 
     {
-        $pid = getmypid();
         $status = file_get_contents("/proc/{$pid}/status");
+        if (!$status) return 0;
         preg_match('/VmRSS\:\s+(\d+)\s+kB/', $status, $matches);
         $vmRSS = $matches[1];
-        return $vmRSS*1024;
+        return $vmRSS;
     }
     
 }

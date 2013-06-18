@@ -82,22 +82,6 @@ Class Backend
         return json_decode($this->_cmd('QUERYALL'), TRUE);
     }
     
-    // 查询进程状态
-    // 返回：UP（正常）、DOWN（当机）
-    public function status($jobname)
-    {
-        return $this->_cmd('STATUS', array(
-            'jobname' => $jobname,
-        ));
-    }
-    
-    // 查询所有进程状态
-    // 返回：所有进程状态数组
-    public function statusall()
-    {
-        return $this->_cmd('STATUSALL');
-    }
-    
     // 启动进程
     // 返回：OK（成功）、FAILED（失败）
     public function start($jobname)
@@ -125,6 +109,22 @@ Class Backend
         ));
     }
     
+    // 查询进程状态
+    // 返回：UP（正常）、DOWN（当机）
+    public function status($jobname)
+    {
+        return $this->_cmd('STATUS', array(
+            'jobname' => $jobname,
+        ));
+    }
+    
+    // 查询所有进程状态
+    // 返回：所有进程状态数组
+    public function statusall()
+    {
+        return json_decode($this->_cmd('STATUSALL'), TRUE);
+    }
+    
     // 读取进程输出缓冲
     // 返回：进程输出缓冲区内容
     public function read($jobname)
@@ -133,6 +133,22 @@ Class Backend
             'jobname' => $jobname,
         ));
         return substr($result, 0, -1);
+    }
+    
+    // 查询进程内存占用量
+    // 返回：内存占用量，单位为 kB
+    public function mem($jobname)
+    {
+        return $this->_cmd('MEM', array(
+            'jobname' => $jobname,
+        ));
+    }
+    
+    // 查询所有进程的内存占用量
+    // 返回：所有进程的内存占用量数组，单位为 kB
+    public function memall()
+    {
+        return json_decode($this->_cmd('MEMALL'), TRUE);
     }
     
     // 读取进程服务器的输出缓冲

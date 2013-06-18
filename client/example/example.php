@@ -1,5 +1,5 @@
 <?php
-include_once('../Backend.class.php');
+include_once(__dir__.'/../Backend.class.php');
 
 $be = new Backend;
 $be->init('127.0.0.1', 13123);
