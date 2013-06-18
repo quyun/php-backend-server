@@ -591,7 +591,7 @@ class BackendServer
     }
 
     // 查看所有进程状态
-    public function command_statusall($jobname)
+    public function command_statusall()
     {
         $pids = $this->shm->get_var('pids');
 
