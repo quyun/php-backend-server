@@ -39,59 +39,73 @@ class BackendServer
         }
     }
 
-    // 加载插件
-    public function load_plugins()
+    // 批量加载插件
+    public function load_plugins($plugin_names)
     {
-        if ($handle = opendir($this->plugins_path))
+        if (!($handle = opendir($this->plugins_path))) return FALSE;
+
+        if ($plugin_names == '*')
         {
             while (($file = readdir($handle)) != FALSE)
             {
                 if ($file == '.' || $file == '..') continue;
-
-                $plugin_name = $file;
-                $plugin_dir = $this->plugins_path.'/'.$plugin_name;
-                if (is_dir($plugin_dir))
-                {
-                    $initfile = $plugin_dir.'/init.php';
-                    if (is_file($initfile))
-                    {
-                        // 禁止插件输出
-                        ob_start();
-                        require_once($initfile);
-                        ob_clean();
-
-                        $class_name = ucfirst($plugin_name);
-                        if (!class_exists($class_name)) continue;
-
-                        $ph = new $class_name($this, array(
-                            'server_ip' => $this->server_ip,
-                            'server_port' => $this->server_port,
-                            'log_path' => $this->log_path,
-                            'plugins_data_path' => $this->plugins_data_path,
-                        ));
-                        $this->plugins[$plugin_name] = $ph;
-
-                        if (method_exists($ph, 'on_server_inited'))
-                        {
-                            $this->event_handlers['server_inited'][] = array($ph, 'on_server_inited');
-                        }
-                        if (method_exists($ph, 'on_command_received'))
-                        {
-                            $this->event_handlers['command_received'][] = array($ph, 'on_command_received');
-                        }
-
-                        $this->server_echo("Plugin \"{$plugin_name}\" loaded.\n");
-                    }
-                }
+                $this->load_plugin($file);
             }
 
             closedir($handle);
-            return TRUE;
         }
         else
         {
-            return FALSE;
+            $plugin_names = explode(',', $plugin_names);
+            foreach ($plugin_names as $plugin_name)
+            {
+                $plugin_name = trim($plugin_name);
+                if (!$plugin_name) continue;
+                $this->load_plugin($plugin_name);
+            }
         }
+
+        return TRUE;
+    }
+
+    // 加载插件
+    public function load_plugin($plugin_name)
+    {
+        $plugin_dir = $this->plugins_path.'/'.$plugin_name;
+        if (!is_dir($plugin_dir)) return FALSE;
+
+        $initfile = $plugin_dir.'/init.php';
+        if (is_file($initfile))
+        {
+            // 禁止插件输出
+            ob_start();
+            require_once($initfile);
+            ob_clean();
+
+            $class_name = ucfirst($plugin_name);
+            if (!class_exists($class_name)) return FALSE;
+
+            $ph = new $class_name($this, array(
+                'server_ip' => $this->server_ip,
+                'server_port' => $this->server_port,
+                'log_path' => $this->log_path,
+                'plugins_data_path' => $this->plugins_data_path,
+            ));
+            $this->plugins[$plugin_name] = $ph;
+
+            if (method_exists($ph, 'on_server_inited'))
+            {
+                $this->event_handlers['server_inited'][] = array($ph, 'on_server_inited');
+            }
+            if (method_exists($ph, 'on_command_received'))
+            {
+                $this->event_handlers['command_received'][] = array($ph, 'on_command_received');
+            }
+
+            $this->server_echo("Plugin \"{$plugin_name}\" loaded.\n");
+        }
+
+        return TRUE;
     }
     
     // 启动服务器
@@ -231,7 +245,7 @@ class BackendServer
             }
         }
 
-        if (in_array($cmd, array('ADD', 'DELETE', 'UPDATE', 'QUERY', 'START', 'STOP', 'RESTART', 'STATUS', 'READ', 'MEM')))
+        if (in_array($cmd, array('ADD', 'DELETE', 'UPDATE', 'GET', 'START', 'STOP', 'RESTART', 'STATUS', 'READ', 'MEM')))
         {
             if (!isset($params['jobname']))
             {
@@ -268,12 +282,12 @@ class BackendServer
                 $this->command_update($jobname, $params);
                 break;
 
-            case 'QUERY':   // 查询进程信息
-                $this->command_query($params['jobname']);
+            case 'GET':   // 查询进程信息
+                $this->command_get($params['jobname']);
                 break;
 
-            case 'QUERYALL':   // 查询所有进程信息
-                $this->command_queryall();
+            case 'GETALL':   // 查询所有进程信息
+                $this->command_getall();
                 break;
 
             case 'START':   // 开启进程
@@ -381,7 +395,7 @@ class BackendServer
     }
 
     // 查询单个进程信息
-    public function command_query($jobname)
+    public function command_get($jobname)
     {
         $result = $this->config->get($jobname);
         $this->socket_write(json_encode($result));
@@ -389,7 +403,7 @@ class BackendServer
     }
 
     // 查询所有进程信息
-    public function command_queryall()
+    public function command_getall()
     {
         $result = $this->config->getall();
         $this->socket_write(json_encode($result));

@@ -22,6 +22,9 @@ $server_port = 13123;
 
 // 时区设置
 $timezone = 'Asia/Shanghai';
+
+// 选择要自动加载的插件，用逗号分隔，*表示所有插件
+$autoload_plugins = '*';
 ```
 
 ## 客户端类参考
@@ -136,10 +139,10 @@ echo $be->update('testproc', array('writelog'=>FALSE));
 ```
 
 
-#### query - 查看进程配置
+#### get - 查看进程配置
 
 ###### 定义
-	string query($jobname)
+	string get($jobname)
 
 ###### 参数
 	$jobname：要查看的进程的名称
@@ -166,13 +169,13 @@ Array
     [writelog] => 1
 )
 */
-print_r($be->query('testproc'));
+print_r($be->get('testproc'));
 ```
 
-#### queryall - 查看所有进程配置
+#### getall - 查看所有进程配置
 
 ###### 定义
-	string queryall()
+	string getall()
 
 ###### 返回
 	更新成功返回进程配置信息，失败返回NULL。
@@ -200,7 +203,7 @@ Array
 
 )
 */
-print_r($be->queryall());
+print_r($be->getall());
 ```
 
 

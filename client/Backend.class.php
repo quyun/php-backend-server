@@ -68,18 +68,18 @@ Class Backend
 
     // 查询单个进程信息
     // 返回进程信息数组
-    public function query($jobname)
+    public function get($jobname)
     {
-        return json_decode($this->_cmd('QUERY', array(
+        return json_decode($this->_cmd('GET', array(
             'jobname' => $jobname,
         )), TRUE);
     }
 
     // 查询所有进程信息
     // 返回所有进程的信息数组
-    public function queryall()
+    public function getall()
     {
-        return json_decode($this->_cmd('QUERYALL'), TRUE);
+        return json_decode($this->_cmd('GETALL'), TRUE);
     }
     
     // 启动进程
