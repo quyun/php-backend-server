@@ -590,6 +590,21 @@ class BackendServer
         return TRUE;
     }
 
+    // 查看所有进程状态
+    public function command_statusall($jobname)
+    {
+        $pids = $this->shm->get_var('pids');
+
+        $statuses = array();
+        foreach ($pids as $jobname=>$pid)
+        {
+            $statuses[$jobname] = $this->process_exists($pid) ? 'UP' : 'DOWN';
+        }
+        $this->socket_write(json_encode($statuses));
+        
+        return TRUE;
+    }
+
     // 读取进程输出缓冲区
     public function command_read($jobname)
     {
