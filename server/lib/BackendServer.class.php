@@ -34,8 +34,8 @@ class BackendServer
 
         if (function_exists('fildes_dup2'))
         {
-            //$errorlog_fd = fopen($this->log_path.'/server.error.log', 'a+');
-            //fildes_dup2(fildes_fileno($errorlog_fd), fildes_fileno(STDERR));   
+            $errorlog_fd = fopen($this->log_path.'/server.error.log', 'a+');
+            fildes_dup2(fildes_fileno($errorlog_fd), fildes_fileno(STDERR));   
         }
     }
 
@@ -57,9 +57,10 @@ class BackendServer
                     $initfile = $plugin_dir.'/init.php';
                     if (is_file($initfile))
                     {
-                        //ob_start();
+                        // 禁止插件输出
+                        ob_start();
                         require_once($initfile);
-                        //ob_clean();
+                        ob_clean();
 
                         $class_name = ucfirst($plugin_name);
                         if (!class_exists($class_name)) continue;
