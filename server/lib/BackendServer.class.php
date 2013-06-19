@@ -80,7 +80,7 @@ class BackendServer
             // 禁止插件输出
             ob_start();
             require_once($initfile);
-            ob_clean();
+            ob_end_clean();
 
             $class_name = ucfirst($plugin_name);
             if (!class_exists($class_name)) return FALSE;
@@ -120,7 +120,7 @@ class BackendServer
         {
             foreach ($this->event_handlers['server_inited'] as $handler)
             {
-                call_user_func($handler);
+                if (!call_user_func($handler)) return FALSE;
             }
         }
 
@@ -141,25 +141,25 @@ class BackendServer
     {
         if (!($this->socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)))
         {
-            $this->server_echo("socket_create() failed.");
+            $this->server_echo('socket_create() failed.');
             return FALSE;
         }
 
         if (!socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1))
         {
-            $this->server_echo("socket_set_option() failed.");
+            $this->server_echo('socket_set_option() failed.');
             return FALSE;
         }
 
         if (!($ret = @socket_bind($this->socket, $this->server_ip, $this->server_port)))
         {
-            $this->server_echo("socket_bind() failed.");
+            $this->server_echo('socket_bind() failed.');
             return FALSE;
         }
 
         if (!($ret = @socket_listen($this->socket, 5)))
         {
-            $this->server_echo("socket_listen() failed.");
+            $this->server_echo('socket_listen() failed.');
             return FALSE;
         }
         
@@ -173,7 +173,7 @@ class BackendServer
         $this->shm = new SharedMemory('shm_key_of_backend_server_'.$this->server_ip.'_'.$this->server_port);
         if (!$this->shm->attach())
         {
-            $this->server_echo("shm attach() failed.");
+            $this->server_echo('shm attach() failed.');
             return FALSE;
         }
 
@@ -206,13 +206,13 @@ class BackendServer
             $this->server_echo("\nWaiting for new command...");
             if (!($this->cnt = @socket_accept($this->socket)))
             {
-                $this->server_echo("socket_accept() failed.");
+                $this->server_echo('socket_accept() failed.');
                 break;
             }
             
             // 读取输入
             if (!($input = @socket_read($this->cnt, 1024))) {
-                $this->server_echo("socket_read() failed.");
+                $this->server_echo('socket_read() failed.');
                 break;
             }
 
@@ -226,8 +226,8 @@ class BackendServer
                 $params = json_decode($params, TRUE);
                 if ($params === FALSE)
                 {
-                    $this->socket_write('FAILED');
-                    $this->server_echo("FAILED. (params decode failed.)");
+                    $this->client_return('FAILED');
+                    $this->server_echo('FAILED. (params decode failed.)');
                     continue;
                 }
             }
@@ -250,7 +250,7 @@ class BackendServer
         {
             foreach ($this->event_handlers['command_received'] as $handler)
             {
-                call_user_func($handler, $cmd, $params);
+                if (!call_user_func($handler, $cmd, $params)) return FALSE;
             }
         }
 
@@ -258,8 +258,8 @@ class BackendServer
         {
             if (!isset($params['jobname']))
             {
-                $this->socket_write('FAILED');
-                $this->server_echo("FAILED. (jobname is required.)");
+                $this->client_return('FAILED');
+                $this->server_echo('FAILED. (jobname is required.)');
                 return FALSE;
             }
         }
@@ -282,7 +282,7 @@ class BackendServer
 
         if (!isset($params['command']))
         {
-            $this->socket_write('FAILED');
+            $this->client_return('FAILED');
             $this->server_echo("FAILED. (no command specified.)");
             return FALSE;
         }
@@ -301,14 +301,14 @@ class BackendServer
 
         if ($rt)
         {
-            $this->socket_write('OK');
-            $this->server_echo("OK");
+            $this->client_return('OK');
+            $this->server_echo('OK');
             return TRUE;
         }
         else
         {
-            $this->socket_write('FAILED');
-            $this->server_echo("FAILED");
+            $this->client_return('FAILED');
+            $this->server_echo('FAILED');
             return FALSE;
         }
     }
@@ -322,8 +322,8 @@ class BackendServer
         $pid = $this->shm_process_getpid($jobname);
         if ($pid && $this->process_exists($pid))
         {
-            $this->socket_write('FAILED');
-            $this->server_echo("FAILED. (Process is still running)");
+            $this->client_return('FAILED');
+            $this->server_echo('FAILED. (Process is still running)');
             return FALSE;
         }
 
@@ -344,14 +344,14 @@ class BackendServer
         $rt = $this->config->update($jobname, $params);
         if ($rt)
         {
-            $this->socket_write('OK');
-            $this->server_echo("OK");
+            $this->client_return('OK');
+            $this->server_echo('OK');
             return TRUE;
         }
         else
         {
-            $this->socket_write('FAILED');
-            $this->server_echo("FAILED");
+            $this->client_return('FAILED');
+            $this->server_echo('FAILED');
             return FALSE;
         }
         return $rt;
@@ -363,7 +363,14 @@ class BackendServer
         $jobname = $params['jobname'];
 
         $result = $this->config->get($jobname);
-        $this->socket_write(json_encode($result));
+        if ($result)
+        {
+            $this->client_return('OK', $result);
+        }
+        else
+        {
+            $this->client_return('FAILED');   
+        }
         return $result;
     }
 
@@ -371,7 +378,14 @@ class BackendServer
     public function command_getall($params)
     {
         $result = $this->config->getall();
-        $this->socket_write(json_encode($result));
+        if ($result)
+        {
+            $this->client_return('OK', $result);
+        }
+        else
+        {
+            $this->client_return('FAILED');   
+        }
         return $result;
     }
 
@@ -392,7 +406,7 @@ class BackendServer
             // 检查进程是否正在运行
             if ($this->process_exists($pid))
             {
-                $this->socket_write('FAILED');
+                $this->client_return('FAILED');
                 $this->server_echo("FAILED. (process \"$jobname\"({$pid}) has already exist.)");
                 return FALSE;
             }
@@ -401,7 +415,7 @@ class BackendServer
         if (!file_exists($command))
         {
             // 文件不存在
-            $this->socket_write('FAILED');
+            $this->client_return('FAILED');
             $this->server_echo("FAILED. (command path \"$command\" does not exist.)");
             return FALSE;
         }
@@ -410,8 +424,8 @@ class BackendServer
         $pid = pcntl_fork();
         if ($pid == -1)
         {
-            $this->socket_write('FAILED');
-            $this->server_echo("pcntl_fork() failed.");
+            $this->client_return('FAILED');
+            $this->server_echo('pcntl_fork() failed.');
             return FALSE;
         }
         else if ($pid)    // 父进程
@@ -424,8 +438,8 @@ class BackendServer
         $t_pid = pcntl_fork();
         if ($t_pid == -1)
         {
-            $this->socket_write('FAILED');
-            $this->server_echo("pcntl_fork() failed.");
+            $this->client_return('FAILED');
+            $this->server_echo('pcntl_fork() failed.');
             return FALSE;
         }
         else if ($t_pid)
@@ -437,6 +451,7 @@ class BackendServer
         $this->jobname = $jobname;
         $this->writelog = $writelog;
         $this->buffersize = $buffersize;
+        $newline = (isset($params['newline']) && $params['newline']);
 
         if (ProcessContainer::dup2_available())
         {
@@ -445,8 +460,8 @@ class BackendServer
         else
         {
             // 需要在proc_open前关闭socket，否则会被proc_open进程继承，导致socket端口被占用
-            $this->socket_write('OK');
-            $this->server_echo("OK");
+            $this->client_return('OK');
+            $this->server_echo('OK', $newline);
             $this->socket_close();
         }
 
@@ -459,8 +474,8 @@ class BackendServer
         {
             if (ProcessContainer::dup2_available())
             {
-                $this->socket_write('FAILED');
-                $this->server_echo("output_buffer init failed.");
+                $this->client_return('FAILED');
+                $this->server_echo('FAILED. (output_buffer init failed.)');
                 $this->socket_close();
             }
             return FALSE;
@@ -476,8 +491,8 @@ class BackendServer
         {
             if (ProcessContainer::dup2_available())
             {
-                $this->socket_write('FAILED');
-                $this->server_echo("output_buffer init failed.");
+                $this->client_return('FAILED');
+                $this->server_echo('FAILED. (output_buffer init failed.)');
                 $this->socket_close();
             }
             return FALSE;
@@ -485,8 +500,8 @@ class BackendServer
 
         if (ProcessContainer::dup2_available())
         {
-            $this->socket_write('OK');
-            $this->server_echo("OK");
+            $this->client_return('OK');
+            $this->server_echo('OK', $newline);
             $this->socket_close();
         }
 
@@ -508,7 +523,7 @@ class BackendServer
             // 进程不存在
             if (!$is_restart)
             {
-                $this->socket_write('FAILED');
+                $this->client_return('FAILED');
             }
             $this->server_echo("FAILED. (process \"$jobname\" does not exist.)");
             return FALSE;
@@ -519,7 +534,7 @@ class BackendServer
         {
             if (!$is_restart)
             {
-                $this->socket_write('FAILED');
+                $this->client_return('FAILED');
             }
             $this->server_echo("FAILED. (failed to kill process \"$jobname\".)");
             return FALSE;
@@ -527,9 +542,9 @@ class BackendServer
 
         if (!$is_restart)
         {
-            $this->socket_write('OK');
+            $this->client_return('OK');
         }
-        $this->server_echo("OK");
+        $this->server_echo('OK');
         
         return TRUE;
     }
@@ -542,7 +557,7 @@ class BackendServer
         $pid = $this->shm_process_getpid($jobname);
         if (!$pid)
         {
-            $this->socket_write('FAILED');
+            $this->client_return('FAILED');
             $this->server_echo("FAILED. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
@@ -553,7 +568,7 @@ class BackendServer
         }
         else
         {
-            $this->socket_write('FAILED');
+            $this->client_return('FAILED');
             return FALSE;
         }
     }
@@ -567,20 +582,20 @@ class BackendServer
         if (!$pid)
         {
             // 进程不存在
-            $this->socket_write('DOWN');
+            $this->client_return('FAILED');
             $this->server_echo("DOWN. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
        
         if ($this->process_exists($pid))
         {
-            $this->socket_write('UP');
-            $this->server_echo("UP");
+            $this->client_return('OK', 'UP');
+            $this->server_echo('UP');
         }
         else
         {
-            $this->socket_write('DOWN');
-            $this->server_echo("DOWN");
+            $this->client_return('OK', 'DOWN');
+            $this->server_echo('DOWN');
         }
         
         return TRUE;
@@ -596,7 +611,7 @@ class BackendServer
         {
             $statuses[$jobname] = $this->process_exists($pid) ? 'UP' : 'DOWN';
         }
-        $this->socket_write(json_encode($statuses));
+        $this->client_return('OK', $statuses);
         
         return $statuses;
     }
@@ -610,7 +625,7 @@ class BackendServer
         if (!$pid)
         {
             // 进程不存在
-            $this->socket_write("\0");
+            $this->client_return('FAILED');
             $this->server_echo("NULL. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
@@ -619,11 +634,11 @@ class BackendServer
         $output_buffer = $this->shm->get_var('ob_'.$jobname);
         if ($output_buffer)
         {
-            $this->socket_write(implode("\n", $output_buffer)."\n");
+            $this->client_return('OK', implode("\n", $output_buffer));
         }
         else
         {
-            $this->socket_write("\n");
+            $this->client_return('OK', '');
         }
         
         return $output_buffer;
@@ -638,12 +653,12 @@ class BackendServer
         if (!$pid)
         {
             // 进程不存在
-            $this->socket_write("0");
+            $this->client_return('FAILED');
             $this->server_echo("NULL. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
 
-        $this->socket_write($this->memory_get_usage($pid));
+        $this->client_return('OK', $this->memory_get_usage($pid));
     }
 
     // 读取所有进程的内存占用量
@@ -656,7 +671,7 @@ class BackendServer
         {
             $usages[$jobname] = $this->memory_get_usage($pid);
         }
-        $this->socket_write(json_encode($usages));
+        $this->client_return(json_encode($usages));
         
         return $usages;
     }
@@ -664,20 +679,20 @@ class BackendServer
     // 读取服务器输出缓冲区
     public function command_serverread($params)
     {
-        $this->socket_write(implode('', $this->server_ob));
+        $this->client_return('OK', implode('', $this->server_ob));
     }
 
     // 读取服务器内存占用量
     public function command_servermem($params)
     {
         $pid = getmypid();
-        $this->socket_write($this->memory_get_usage($pid));
+        $this->client_return('OK', $this->memory_get_usage($pid));
     }
 
     // 未知指令
     public function command_unknown($command)
     {
-        $this->socket_write('UNKNOWN');
+        $this->client_return('UNKNOWN');
         $this->server_echo("UNKNOWN. (unknown command \"$command\".)");
         return FALSE;
     }
@@ -794,22 +809,25 @@ class BackendServer
         $this->socket_close();
     }
     
-    private function socket_write($str)
-    {
-        if (!$this->cnt) return FALSE;
-        return socket_write($this->cnt, $str);
-    }
-    
     private function socket_close()
     {
         if (!$this->socket) return FALSE;
         return socket_close($this->socket);
     }
+    
+    // 返回客户端
+    public function client_return($code, $data=NULL)
+    {
+        if (!$this->cnt) return FALSE;
+        $result = array('code'=>$code);
+        if (!is_null($data)) $result['data'] = $data;
+        return socket_write($this->cnt, json_encode($result));
+    }
 
     // 服务器输出
-    public function server_echo($str)
+    public function server_echo($str, $newline=TRUE)
     {
-        $str = "\n".$str;
+        if ($newline) $str = "\n".$str;
         $str = $this->time_prefix($str);
 
         $this->server_ob[] = $str;

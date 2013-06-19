@@ -9,29 +9,27 @@
 class Autostart
 {
     private $server = NULL;        // 后台进程服务器对象
-    private $data_path = NULL;     // 插件数据保存目录
 
     public function __construct($server, $setting)
     {
         $this->server = $server;
-        $this->data_path = isset($setting['plugins_data_path']) ? $setting['plugins_data_path'] : realpath('./data/plugins');
-        $this->data_path .= '/autostart';
-        if (!file_exists($this->data_path)) mkdir($this->data_path, 0777);
     }
 
     public function on_server_inited()
     {
         $jobs = $this->server->config->getall();
-        if (!$jobs) return FALSE;
+        if (!$jobs) return TRUE;
 
         foreach ($jobs as $jobname=>$setting)
         {
             if (isset($setting['autostart']) && $setting['autostart'])
             {
                 $this->server->server_echo("[autostart] starting \"{$jobname}\"...");
-                $this->server->command_start(array('jobname'=>$jobname));
+                $this->server->command_start(array('jobname'=>$jobname, 'newline'=>FALSE));
             }
         }
+
+        return TRUE;
     }
 
 }

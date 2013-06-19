@@ -13,7 +13,7 @@ class JobConfig
 
         if (!file_exists($this->config_file))
         {
-            file_put_contents($this->config_file, $this->json_indent(json_encode(array())));
+            $this->_set(array());
         }
     }
     
@@ -27,17 +27,13 @@ class JobConfig
      */
     public function add($jobname, $setting)
     {
-        $json_str = file_get_contents($this->config_file);
-        $jobs = json_decode($json_str, TRUE);
+        $jobs = $this->_get();
         if ($jobs === FALSE) return FALSE;
 
         if (isset($jobs[$jobname])) return FALSE;
-
         $jobs[$jobname] = $setting;
-        $json_str = $this->json_indent(json_encode($jobs));
-        file_put_contents($this->config_file, $json_str, LOCK_EX);
 
-        return TRUE;
+        return $this->_set($jobs);
     }
     
     /*
@@ -49,15 +45,12 @@ class JobConfig
      */
     public function delete($jobname)
     {
-        $json_str = file_get_contents($this->config_file);
-        $jobs = json_decode($json_str, TRUE);
+        $jobs = $this->_get();
         if ($jobs === FALSE) return FALSE;
 
         unset($jobs[$jobname]);
-        $json_str = $this->json_indent(json_encode($jobs));
-        file_put_contents($this->config_file, $json_str, LOCK_EX);
 
-        return TRUE;
+        return $this->_set($jobs);
     }
     
     /*
@@ -70,17 +63,13 @@ class JobConfig
      */
     public function update($jobname, $setting)
     {
-        $json_str = file_get_contents($this->config_file);
-        $jobs = json_decode($json_str, TRUE);
+        $jobs = $this->_get();
         if ($jobs === FALSE) return FALSE;
 
         if (!isset($jobs[$jobname])) return FALSE;
         $jobs[$jobname] = array_merge($jobs[$jobname], $setting);
 
-        $json_str = $this->json_indent(json_encode($jobs));
-        file_put_contents($this->config_file, $json_str);
-
-        return TRUE;
+        return $this->_set($jobs);
     }
     
     /*
@@ -92,8 +81,7 @@ class JobConfig
      */
     public function get($jobname)
     {
-        $json_str = file_get_contents($this->config_file);
-        $jobs = json_decode($json_str, TRUE);
+        $jobs = $this->_get();
         if ($jobs === FALSE) return FALSE;
 
         if (!isset($jobs[$jobname])) return FALSE;
@@ -107,10 +95,21 @@ class JobConfig
      */
     public function getall()
     {
+        return $this->_get();
+    }
+
+    private function _get()
+    {
         $json_str = file_get_contents($this->config_file);
         $jobs = json_decode($json_str, TRUE);
         if ($jobs === FALSE) return FALSE;
         return $jobs;
+    }
+
+    private function _set($jobs)
+    {
+        $json_str = $this->json_indent(json_encode($jobs));
+        return file_put_contents($this->config_file, $json_str) == strlen($json_str);
     }
 
     /**
