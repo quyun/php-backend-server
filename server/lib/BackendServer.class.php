@@ -14,29 +14,29 @@ class BackendServer
     private $cnt = NULL;                // 当前socket连接
     private $shm = NULL;                // 共享内存
     private $server_ob = array();       // 服务器输出缓冲
+    private $server_muted = FALSE;      // 服务器不输出标志
+
+    private $log_path = NULL;           // 进程日志路径
+    private $plugins_path = NULL;       // 插件路径
+    private $plugins_data_path = NULL;  // 插件数据路径
 
     private $event_handlers = array(    // 事件处理函数
         'server_inited' => array(),     // 服务器初始化完毕
         'command_received' => array(),  // 接收到命令
     );
-
     private $plugins = array();         // 插件对象列表
+
 
     public function __construct($setting)
     {
         $this->server_ip = isset($setting['server_ip']) ? $setting['server_ip'] : '127.0.0.1';
         $this->server_port = isset($setting['server_port']) ? $setting['server_port'] : 13123;
-        $this->config_file = isset($setting['config_file']) ? $setting['config_file'] : realpath('./data').'/config.json';
 
-        $this->log_path = isset($setting['log_path']) ? $setting['log_path'] : realpath('./data/log/');
-        $this->plugins_path = isset($setting['plugins_path']) ? $setting['plugins_path'] : realpath('./plugins/');
-        $this->plugins_data_path = isset($setting['plugins_data_path']) ? $setting['plugins_data_path'] : realpath('./data/plugins/');
-
-        if (function_exists('fildes_dup2'))
-        {
-            $errorlog_fd = fopen($this->log_path.'/server.error.log', 'a+');
-            fildes_dup2(fildes_fileno($errorlog_fd), fildes_fileno(STDERR));   
-        }
+        $basedir = isset($setting['basedir']) ? $setting['basedir'] : realpath(dirname(__FILE__).'/../');
+        $this->config_file = isset($setting['config_file']) ? $setting['config_file'] : $basedir.'/data/config.json';
+        $this->log_path = isset($setting['log_path']) ? $setting['log_path'] : $basedir.'/data/log';
+        $this->plugins_path = isset($setting['plugins_path']) ? $setting['plugins_path'] : $basedir.'/plugins';
+        $this->plugins_data_path = isset($setting['plugins_data_path']) ? $setting['plugins_data_path'] : $basedir.'/data/plugins';
     }
 
     // 批量加载插件
@@ -102,7 +102,7 @@ class BackendServer
                 $this->event_handlers['command_received'][] = array($ph, 'on_command_received');
             }
 
-            $this->server_echo("Plugin \"{$plugin_name}\" loaded.\n");
+            $this->server_echo("Plugin \"{$plugin_name}\" loaded.");
         }
 
         return TRUE;
@@ -124,6 +124,15 @@ class BackendServer
             }
         }
 
+        // 关闭终端输出
+        $this->server_muted = TRUE;
+
+        if (function_exists('fildes_dup2'))
+        {
+            $errorlog_fd = fopen($this->log_path.'/server.error.log', 'a+');
+            fildes_dup2(fildes_fileno($errorlog_fd), fildes_fileno(STDERR));   
+        }
+
         return $this->loop();
     }
 
@@ -132,29 +141,29 @@ class BackendServer
     {
         if (!($this->socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)))
         {
-            $this->server_echo("socket_create() failed.\n");
+            $this->server_echo("socket_create() failed.");
             return FALSE;
         }
 
         if (!socket_set_option($this->socket, SOL_SOCKET, SO_REUSEADDR, 1))
         {
-            $this->server_echo("socket_set_option() failed.\n");
+            $this->server_echo("socket_set_option() failed.");
             return FALSE;
         }
 
         if (!($ret = @socket_bind($this->socket, $this->server_ip, $this->server_port)))
         {
-            $this->server_echo("socket_bind() failed.\n");
+            $this->server_echo("socket_bind() failed.");
             return FALSE;
         }
 
         if (!($ret = @socket_listen($this->socket, 5)))
         {
-            $this->server_echo("socket_listen() failed.\n");
+            $this->server_echo("socket_listen() failed.");
             return FALSE;
         }
         
-        $this->server_echo("Backend server starting, binding {$this->server_ip}:{$this->server_port}.\n");
+        $this->server_echo("Backend server starting, binding {$this->server_ip}:{$this->server_port}.");
         return TRUE;
     }
     
@@ -164,7 +173,7 @@ class BackendServer
         $this->shm = new SharedMemory('shm_key_of_backend_server_'.$this->server_ip.'_'.$this->server_port);
         if (!$this->shm->attach())
         {
-            $this->server_echo("shm attach() failed.\n");
+            $this->server_echo("shm attach() failed.");
             return FALSE;
         }
 
@@ -194,20 +203,20 @@ class BackendServer
         while (TRUE)
         {
             // 等待连接
-            $this->server_echo("\nWaiting for new command...\n");
+            $this->server_echo("\nWaiting for new command...");
             if (!($this->cnt = @socket_accept($this->socket)))
             {
-                $this->server_echo("socket_accept() failed.\n");
+                $this->server_echo("socket_accept() failed.");
                 break;
             }
             
             // 读取输入
             if (!($input = @socket_read($this->cnt, 1024))) {
-                $this->server_echo("socket_read() failed.\n");
+                $this->server_echo("socket_read() failed.");
                 break;
             }
 
-            $this->server_echo("$input\n");
+            $this->server_echo($input);
 
             // 分析并执行命令
             $input_arr = explode(' ', trim($input), 2);
@@ -218,7 +227,7 @@ class BackendServer
                 if ($params === FALSE)
                 {
                     $this->socket_write('FAILED');
-                    $this->server_echo("FAILED. (params decode failed.)\n");
+                    $this->server_echo("FAILED. (params decode failed.)");
                     continue;
                 }
             }
@@ -250,94 +259,42 @@ class BackendServer
             if (!isset($params['jobname']))
             {
                 $this->socket_write('FAILED');
-                $this->server_echo("FAILED. (jobname is required.)\n");
+                $this->server_echo("FAILED. (jobname is required.)");
                 return FALSE;
             }
         }
 
-        switch ($cmd)
+        $cmdfunc = 'command_'.strtolower($cmd);
+        if (method_exists($this, $cmdfunc))
         {
-            case 'ADD':     // 添加进程
-                if (!isset($params['command']))
-                {
-                    $this->socket_write('FAILED');
-                    $this->server_echo("FAILED. (no command specified.)\n");
-                    break;
-                }
-                $jobname = $params['jobname'];
-                $command = $params['command'];
-                $cmdparams = isset($params['params']) ? $params['params'] : '';
-                $buffersize = isset($params['buffersize']) ? $params['buffersize'] : 20;
-                $writelog = isset($params['writelog']) ? $params['writelog'] : FALSE;
-                $this->command_add($jobname, $command, $cmdparams, $buffersize, $writelog);
-                break;
-
-            case 'DELETE':  // 删除进程
-                $this->command_delete($params['jobname']);
-                break;
-
-            case 'UPDATE':  // 更新进程
-                $jobname = $params['jobname'];
-                unset($params['jobname']);
-                $this->command_update($jobname, $params);
-                break;
-
-            case 'GET':   // 查询进程信息
-                $this->command_get($params['jobname']);
-                break;
-
-            case 'GETALL':   // 查询所有进程信息
-                $this->command_getall();
-                break;
-
-            case 'START':   // 开启进程
-                $this->command_start($params['jobname']);
-                break;
-
-            case 'STOP':	// 结束进程
-                $this->command_stop($params['jobname']);
-                break;
-
-            case 'RESTART':	// 重启进程
-                $this->command_restart($params['jobname']);
-                break;
-
-            case 'STATUS':  // 获取进程状态
-                $this->command_status($params['jobname']);
-                break;
-
-            case 'STATUSALL':// 获取所有进程状态
-                $this->command_statusall();
-                break;
-
-            case 'READ':	// 读取进程缓冲
-                $this->command_read($params['jobname']);
-                break;
-
-            case 'MEM':     // 获取进程内存使用量
-                $this->command_mem($params['jobname']);
-                break;
-
-            case 'MEMALL':  // 获取所有进程的内存使用量
-                $this->command_memall();
-                break;
-
-            case 'SERVERMEM':	// 读取服务器内存占用情况
-                $this->command_servermem();
-                break;
-
-            case 'SERVERREAD':	// 读取服务器输出缓冲
-                $this->command_serverread();
-                break;
+            call_user_func(array($this, $cmdfunc), $params);
+        }
+        else
+        {
+            $this->command_unknown($cmd);
         }
     }
 
     // 添加进程配置信息
-    public function command_add($jobname, $cmd, $params, $buffersize, $writelog)
+    public function command_add($params)
     {
+        $jobname = $params['jobname'];
+
+        if (!isset($params['command']))
+        {
+            $this->socket_write('FAILED');
+            $this->server_echo("FAILED. (no command specified.)");
+            return FALSE;
+        }
+
+        $command = $params['command'];
+        $cmdparams = isset($params['params']) ? $params['params'] : '';
+        $buffersize = isset($params['buffersize']) ? $params['buffersize'] : 20;
+        $writelog = isset($params['writelog']) ? $params['writelog'] : FALSE;
+
         $rt = $this->config->add($jobname, array(
-            'command' => $cmd,
-            'params' => $params,
+            'command' => $command,
+            'params' => $cmdparams,
             'buffersize' => $buffersize,
             'writelog' => $writelog,
         ));
@@ -345,26 +302,28 @@ class BackendServer
         if ($rt)
         {
             $this->socket_write('OK');
-            $this->server_echo("OK\n");
+            $this->server_echo("OK");
             return TRUE;
         }
         else
         {
             $this->socket_write('FAILED');
-            $this->server_echo("FAILED\n");
+            $this->server_echo("FAILED");
             return FALSE;
         }
     }
 
     // 删除进程配置信息
-    public function command_delete($jobname)
+    public function command_delete($params)
     {
+        $jobname = $params['jobname'];
+
         // 检查进程是否还在运行
         $pid = $this->shm_process_getpid($jobname);
         if ($pid && $this->process_exists($pid))
         {
             $this->socket_write('FAILED');
-            $this->server_echo("FAILED. (Process is still running)\n");
+            $this->server_echo("FAILED. (Process is still running)");
             return FALSE;
         }
 
@@ -376,34 +335,40 @@ class BackendServer
     }
 
     // 更新进程配置信息
-    public function command_update($jobname, $setting)
+    public function command_update($params)
     {
-        $rt = $this->config->update($jobname, $setting);
+        $jobname = $params['jobname'];
+
+        unset($params['jobname']);
+
+        $rt = $this->config->update($jobname, $params);
         if ($rt)
         {
             $this->socket_write('OK');
-            $this->server_echo("OK\n");
+            $this->server_echo("OK");
             return TRUE;
         }
         else
         {
             $this->socket_write('FAILED');
-            $this->server_echo("FAILED\n");
+            $this->server_echo("FAILED");
             return FALSE;
         }
         return $rt;
     }
 
     // 查询单个进程信息
-    public function command_get($jobname)
+    public function command_get($params)
     {
+        $jobname = $params['jobname'];
+
         $result = $this->config->get($jobname);
         $this->socket_write(json_encode($result));
         return $result;
     }
 
     // 查询所有进程信息
-    public function command_getall()
+    public function command_getall($params)
     {
         $result = $this->config->getall();
         $this->socket_write(json_encode($result));
@@ -411,11 +376,13 @@ class BackendServer
     }
 
     // 开启进程
-    public function command_start($jobname)
+    public function command_start($params)
     {
+        $jobname = $params['jobname'];
+
         $setting = $this->config->get($jobname);
         $command = $setting['command'];
-        $params = $setting['params'];
+        $cmdparams = $setting['params'];
         $buffersize = $setting['buffersize'];
         $writelog = $setting['writelog'];
 
@@ -426,7 +393,7 @@ class BackendServer
             if ($this->process_exists($pid))
             {
                 $this->socket_write('FAILED');
-                $this->server_echo("FAILED. (process \"$jobname\"({$pid}) has already exist.)\n");
+                $this->server_echo("FAILED. (process \"$jobname\"({$pid}) has already exist.)");
                 return FALSE;
             }
         }
@@ -435,7 +402,7 @@ class BackendServer
         {
             // 文件不存在
             $this->socket_write('FAILED');
-            $this->server_echo("FAILED. (command path \"$command\" does not exist.)\n");
+            $this->server_echo("FAILED. (command path \"$command\" does not exist.)");
             return FALSE;
         }
 
@@ -444,7 +411,7 @@ class BackendServer
         if ($pid == -1)
         {
             $this->socket_write('FAILED');
-            $this->server_echo("pcntl_fork() failed.\n");
+            $this->server_echo("pcntl_fork() failed.");
             return FALSE;
         }
         else if ($pid)    // 父进程
@@ -458,7 +425,7 @@ class BackendServer
         if ($t_pid == -1)
         {
             $this->socket_write('FAILED');
-            $this->server_echo("pcntl_fork() failed.\n");
+            $this->server_echo("pcntl_fork() failed.");
             return FALSE;
         }
         else if ($t_pid)
@@ -479,11 +446,11 @@ class BackendServer
         {
             // 需要在proc_open前关闭socket，否则会被proc_open进程继承，导致socket端口被占用
             $this->socket_write('OK');
-            $this->server_echo("OK\n");
+            $this->server_echo("OK");
             $this->socket_close();
         }
 
-        $process = new ProcessContainer($command, $params, TRUE);
+        $process = new ProcessContainer($command, $cmdparams, TRUE);
         $process->register_output_handler(array($this, 'process_output_handler'));
         $process->register_error_handler(array($this, 'process_error_handler'));
         $process->register_exit_handler(array($this, 'process_exit_handler'));
@@ -493,7 +460,7 @@ class BackendServer
             if (ProcessContainer::dup2_available())
             {
                 $this->socket_write('FAILED');
-                $this->server_echo("output_buffer init failed.\n");
+                $this->server_echo("output_buffer init failed.");
                 $this->socket_close();
             }
             return FALSE;
@@ -510,7 +477,7 @@ class BackendServer
             if (ProcessContainer::dup2_available())
             {
                 $this->socket_write('FAILED');
-                $this->server_echo("output_buffer init failed.\n");
+                $this->server_echo("output_buffer init failed.");
                 $this->socket_close();
             }
             return FALSE;
@@ -519,7 +486,7 @@ class BackendServer
         if (ProcessContainer::dup2_available())
         {
             $this->socket_write('OK');
-            $this->server_echo("OK\n");
+            $this->server_echo("OK");
             $this->socket_close();
         }
 
@@ -528,9 +495,13 @@ class BackendServer
     }
 
     // 结束进程
-    // $is_restart 是否是重启进程，如果是，则SOCKET不输出
-    public function command_stop($jobname, $is_restart=FALSE)
+    public function command_stop($params)
     {
+        $jobname = $params['jobname'];
+
+        // 是否是重启进程，如果是，则SOCKET不输出
+        $is_restart = (isset($params['is_restart']) && $params['is_restart']);
+
         $pid = $this->shm_process_getpid($jobname);
         if (!$pid)
         {
@@ -539,7 +510,7 @@ class BackendServer
             {
                 $this->socket_write('FAILED');
             }
-            $this->server_echo("FAILED. (process \"$jobname\" does not exist.)\n");
+            $this->server_echo("FAILED. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
 
@@ -550,7 +521,7 @@ class BackendServer
             {
                 $this->socket_write('FAILED');
             }
-            $this->server_echo("FAILED. (failed to kill process \"$jobname\".)\n");
+            $this->server_echo("FAILED. (failed to kill process \"$jobname\".)");
             return FALSE;
         }
 
@@ -558,25 +529,27 @@ class BackendServer
         {
             $this->socket_write('OK');
         }
-        $this->server_echo("OK\n");
+        $this->server_echo("OK");
         
         return TRUE;
     }
 
     // 重启进程
-    public function command_restart($jobname)
+    public function command_restart($params)
     {
+        $jobname = $params['jobname'];
+
         $pid = $this->shm_process_getpid($jobname);
         if (!$pid)
         {
             $this->socket_write('FAILED');
-            $this->server_echo("FAILED. (process \"$jobname\" does not exist.)\n");
+            $this->server_echo("FAILED. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
 
-        if ($this->command_stop($jobname, TRUE))
+        if ($this->command_stop(array('jobname'=>$jobname, 'is_restart'=>TRUE)))
         {
-            return $this->command_start($jobname);
+            return $this->command_start(array('jobname'=>$jobname));
         }
         else
         {
@@ -586,33 +559,35 @@ class BackendServer
     }
 
     // 查看进程状态
-    public function command_status($jobname)
+    public function command_status($params)
     {
+        $jobname = $params['jobname'];
+
         $pid = $this->shm_process_getpid($jobname);
         if (!$pid)
         {
             // 进程不存在
             $this->socket_write('DOWN');
-            $this->server_echo("DOWN. (process \"$jobname\" does not exist.)\n");
+            $this->server_echo("DOWN. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
        
         if ($this->process_exists($pid))
         {
             $this->socket_write('UP');
-            $this->server_echo("UP\n");
+            $this->server_echo("UP");
         }
         else
         {
             $this->socket_write('DOWN');
-            $this->server_echo("DOWN\n");
+            $this->server_echo("DOWN");
         }
         
         return TRUE;
     }
 
     // 查看所有进程状态
-    public function command_statusall()
+    public function command_statusall($params)
     {
         $pids = $this->shm->get_var('pids');
 
@@ -627,14 +602,16 @@ class BackendServer
     }
 
     // 读取进程输出缓冲区
-    public function command_read($jobname)
+    public function command_read($params)
     {
+        $jobname = $params['jobname'];
+
         $pid = $this->shm_process_getpid($jobname);
         if (!$pid)
         {
             // 进程不存在
             $this->socket_write("\0");
-            $this->server_echo("NULL. (process \"$jobname\" does not exist.)\n");
+            $this->server_echo("NULL. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
 
@@ -653,14 +630,16 @@ class BackendServer
     }
 
     // 读取进程内存占用量
-    public function command_mem($jobname)
+    public function command_mem($params)
     {
+        $jobname = $params['jobname'];
+
         $pid = $this->shm_process_getpid($jobname);
         if (!$pid)
         {
             // 进程不存在
             $this->socket_write("0");
-            $this->server_echo("NULL. (process \"$jobname\" does not exist.)\n");
+            $this->server_echo("NULL. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
 
@@ -668,7 +647,7 @@ class BackendServer
     }
 
     // 读取所有进程的内存占用量
-    public function command_memall()
+    public function command_memall($params)
     {
         $pids = $this->shm->get_var('pids');
 
@@ -683,16 +662,24 @@ class BackendServer
     }
 
     // 读取服务器输出缓冲区
-    public function command_serverread()
+    public function command_serverread($params)
     {
         $this->socket_write(implode('', $this->server_ob));
     }
 
     // 读取服务器内存占用量
-    public function command_servermem()
+    public function command_servermem($params)
     {
         $pid = getmypid();
         $this->socket_write($this->memory_get_usage($pid));
+    }
+
+    // 未知指令
+    public function command_unknown($command)
+    {
+        $this->socket_write('UNKNOWN');
+        $this->server_echo("UNKNOWN. (unknown command \"$command\".)");
+        return FALSE;
     }
 
     // 获取共享内存中的进程PID
@@ -767,7 +754,7 @@ class BackendServer
         // 更新共享变量
         if (!$this->shm->put_var('ob_'.$this->jobname, $output_buffer, TRUE))
         {
-            $this->server_echo("shm put_var() failed.\n");
+            $this->server_echo("shm put_var() failed.");
         }
     }
 
@@ -790,7 +777,7 @@ class BackendServer
     // 进程退出处理
     public function process_exit_handler($status)
     {
-        $message = "Process \"{$this->jobname}\" exit with code $status.\n";
+        $message = "Process \"{$this->jobname}\" exit with code $status.";
         $this->server_echo($message);
         $this->process_output_handler($message);
 
@@ -822,13 +809,15 @@ class BackendServer
     // 服务器输出
     public function server_echo($str)
     {
+        $str = "\n".$str;
         $str = $this->time_prefix($str);
 
         $this->server_ob[] = $str;
         $this->server_ob = array_slice($this->server_ob, -20, 20);
-        file_put_contents($this->log_path.'/server.'.date('YmdH').'.log', $str, FILE_APPEND);
+        $server_logfile = $this->log_path.'/server.'.date('YmdH').'.log';
+        file_put_contents($server_logfile, $str, FILE_APPEND);
 
-        if (posix_ttyname(STDOUT)) echo $str;
+        if (!$this->server_muted && posix_ttyname(STDOUT)) echo $str;
     }
 
     // 在输出字符串前添加时间

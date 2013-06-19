@@ -9,7 +9,7 @@
 class Autostart
 {
     private $server = NULL;        // 后台进程服务器对象
-    private $data_path = NULL;    // 插件数据保存目录
+    private $data_path = NULL;     // 插件数据保存目录
 
     public function __construct($server, $setting)
     {
@@ -29,7 +29,7 @@ class Autostart
             if (isset($setting['autostart']) && $setting['autostart'])
             {
                 $this->server->server_echo("[autostart] starting \"{$jobname}\"...");
-                $this->server->command_start($jobname);
+                $this->server->command_start(array('jobname'=>$jobname));
             }
         }
     }
