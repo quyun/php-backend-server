@@ -3,12 +3,26 @@ php-backend-server
 
 PHP实现的后台进程管理服务器，可以通过SOCKET API接口对后台进程进行管理和控制。
 
+
+## 环境依赖
+
+请确保已安装以下 PHP 模块/扩展：
+
+- pcntl
+- posix
+- sysvsem
+- sysvshm
+
+可选模块（弥补 proc_open 无法关闭父进程 fd 的问题）：
+
+- [fildes](https://github.com/hilyjiang/php-fildes)
+
+
 ## 启动服务器
 
 启动服务器很容易，只需要直接运行以下命令即可：
 
 $ php server.php
-
 
 ## 服务器配置
 
@@ -27,6 +41,54 @@ $timezone = 'Asia/Shanghai';
 $autoload_plugins = '*';
 ```
 
+请确保 server/data 目录可写入。
+
+## 客户端示例
+
+该文件位于 client/examples/ 目录下。
+
+```php
+<?php
+require_once(dirname(__FILE__).'/../Backend.class.php');
+
+$be = new Backend;
+$be->init('127.0.0.1', 13123);
+
+print_r($be->add('test', __DIR__.'/scripts/test.php', array('writelog'=>TRUE)));
+print_r($be->start('test'));
+print_r($be->read('test'));
+```
+
+
+## 客户端类快速参考
+
+```
+Class Backend
+- void init($server_ip, $server_port)                          初始化服务器信息
+- array add($jobname, $command, $setting)                      添加进程配置
+- array delete($jobname, $setting)                             删除进程配置
+- array update($jobname, $setting, $setting)                   更新进程配置
+- array get($jobname, $setting)                                查看进程配置
+- array getall($setting)                                       查看所有进程配置
+- array start($jobname, $setting)                              开启进程
+- array stop($jobname, $setting)                               结束进程
+- array restart($jobname, $setting)                            重启进程
+- array status($jobname, $setting)                             查询后台进程状态
+- array statusall($setting)                                    查询所有后台进程状态
+- array read($jobname, $setting)                               读取进程输出缓冲
+- array mem($jobname, $setting, $setting)                      查询进程的内存使用量
+- array memall($setting)                                       查询所有进程的内存使用量
+- array servermem($setting)                                    查询进程服务器的内存使用量
+- array serverread($setting)                                   读取进程服务器的输出
+- array auth_getenable($setting)                               (auth插件) 获取是否启用身份验证
+- array auth_setenable($enable, $setting)                      (auth插件) 设置身份验证启用/禁用
+- array auth_add($username, $password, $privileges, $setting)  (auth插件) 添加用户
+- array auth_delete($username, $setting)                       (auth插件) 删除用户
+- array auth_update($username, $setting)                       (auth插件) 更新用户信息
+- array auth_get($username, $setting)                          (auth插件) 查询单个用户信息
+- array auth_getall($setting)                                  (auth插件) 查询所有用户信息
+```
+
 ## 客户端类参考
 
 客户端类库位于 client 目录下，下面是各个接口的说明。
@@ -37,8 +99,8 @@ $autoload_plugins = '*';
 	void init($server_ip, $server_port)
 
 ###### 参数
-	$server_ip：服务器IP
-	$server_port：服务器端口
+	$server_ip       服务器IP
+	$server_port     服务器端口
 
 ###### 说明
 	如果不调用init进行初始化，则默认的服务器IP和端口为127.0.0.1:13123。
@@ -61,20 +123,23 @@ $be->init('127.0.0.1', 13123); // 显示初始化服务器IP和端口
 #### add - 添加进程配置
 
 ###### 定义
-	string add($jobname, $command, $setting)
+	array add($jobname, $command, $setting)
 
 ###### 参数
-	$jobname：要添加的新进程的名称
-	$command：程序路径
+	$jobname         进程名称
+	$command         程序路径
     $setting         程序执行设置，已知参数如下：
-       * params      程序参数
-       * buffersize  缓冲区行数，默认为20行
-       * writelog    是否将进程输出写入日志，默认为否
-       * autostart   是否随服务器启动（autostart插件参数）
+       - params      程序参数
+       - buffersize  缓冲区行数，默认为20行
+       - writelog    是否将进程输出写入日志，默认为否
+       - autostart   是否随服务器启动（autostart插件参数）
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	添加成功返回OK，添加失败返回FAILED。
-	进程已经存在，将返回FAILED。
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
 
 ###### 示例
 
@@ -83,22 +148,28 @@ $be->init('127.0.0.1', 13123); // 显示初始化服务器IP和端口
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
+print_r($be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE)));
 ```
 
 
 #### delete - 删除进程配置
 
 ###### 定义
-	string delete($jobname)
+	array delete($jobname, $setting)
 
 ###### 参数
-	$jobname：要删除的进程的名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	删除成功返回OK，删除失败返回FAILED。
-	进程不存在，进程还在运行，都将返回FAILED。
-	删除配置时不会删除日志文件。
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+	                删除成功返回OK，删除失败返回FAILED。
+	                进程不存在，进程还在运行，都将返回FAILED。
+	                删除配置时不会删除日志文件。
 
 ###### 示例
 
@@ -107,21 +178,22 @@ echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->delete('testproc');
+print_r($be->delete('testproc'));
 ```
 
 
 #### update - 更新进程配置
 
 ###### 定义
-	string update($jobname, $setting)
+	array update($jobname, $setting, $setting)
 
 ###### 参数
-	$jobname：要更新的进程的名称
-	$setting：进程配置项，同 add
+	$jobname         进程名称
+	$setting         程序执行设置，同 add
 
 ###### 返回
-	更新成功返回OK，更新失败返回FAILED。
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
 
 ###### 示例
 
@@ -132,23 +204,29 @@ require_once('Backend.class.php');
 $be = new Backend();
 
 // 记录日志
-echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
+print_r($be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE)));
 
 // 更新为不记录日志
-echo $be->update('testproc', array('writelog'=>FALSE));
+print_r($be->update('testproc', array('writelog'=>FALSE)));
 ```
 
 
 #### get - 查看进程配置
 
 ###### 定义
-	string get($jobname)
+	array get($jobname, $setting)
 
 ###### 参数
-	$jobname：要查看的进程的名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	更新成功返回进程配置信息，失败返回NULL。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程信息数组
 
 ###### 示例
 
@@ -158,7 +236,7 @@ require_once('Backend.class.php');
 
 $be = new Backend();
 
-echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
+print_r($be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE)));
 
 /* 输出示例：
 Array
@@ -169,16 +247,25 @@ Array
     [writelog] => 1
 )
 */
-print_r($be->get('testproc'));
+$result = $be->get('testproc');
+print_r($result['data']);
 ```
 
 #### getall - 查看所有进程配置
 
 ###### 定义
-	string getall()
+	array getall($setting)
+
+###### 参数
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	更新成功返回进程配置信息，失败返回NULL。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        所有进程的信息数组
 
 ###### 示例
 
@@ -188,7 +275,7 @@ require_once('Backend.class.php');
 
 $be = new Backend();
 
-echo $be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE));
+print_r($be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE)));
 
 /* 输出示例：
 Array
@@ -203,21 +290,27 @@ Array
 
 )
 */
-print_r($be->getall());
+$result = $be->getall();
+print_r($result['data']);
 ```
 
 
 #### start - 开启进程
 
 ###### 定义
-	string start($jobname)
+	array start($jobname, $setting)
 
 ###### 参数
-	$jobname：要开启的进程的名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	开启成功则返回OK，开启失败返回FAILED。
-	进程已在运行，或程序路径不存在，都将返回FAILED。
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+	                进程已在运行，或程序路径不存在，都将返回FAILED。
 
 ###### 示例
 
@@ -226,22 +319,27 @@ print_r($be->getall());
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->add('testproc', '/work/www/test.php');
-echo $be->start('testproc');
+print_r($be->add('testproc', '/work/www/test.php'));
+print_r($be->start('testproc'));
 ```
 
 
 #### stop - 结束进程
 
 ###### 定义
-	string stop($jobname)
+	array stop($jobname, $setting)
 
 ###### 参数
-	$jobname：要停止的进程的名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	结束成功则返回OK，结束失败返回FAILED。
-	进程名不存在，或进程已停止，都将返回FAILED。
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+	                进程名不存在，或进程已停止，都将返回FAILED。
 
 ###### 示例
 
@@ -250,20 +348,26 @@ echo $be->start('testproc');
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->stop('testproc');
+print_r($be->stop('testproc'));
 ```
 
 
 #### restart - 重启进程
+
 ###### 定义
-	string restart($jobname)
+	array restart($jobname, $setting)
 
 ###### 参数
-	$jobname：要重启的进程的名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	重启成功则返回OK，重启失败返回FAILED。
-	进程名不存在，或进程已停止，或程序路径不存在，都将返回FAILED。
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+	                进程名不存在，或进程已停止，或程序路径不存在，都将返回FAILED。
 
 ###### 示例
 
@@ -272,22 +376,26 @@ echo $be->stop('testproc');
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->restart('testproc');
+print_r($be->restart('testproc'));
 ```
 
 
 #### status - 查询后台进程状态
 
 ###### 定义
-	string status($jobname)
+	array status($jobname, $setting)
 
 ###### 参数
-	$jobname：进程名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	返回进程名为$jobname的进程的运行状态。
-	UP表示正在运行；
-	DOWN表示进程不存在或已停止。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        UP（正常）、DOWN（未启动）
 
 ###### 示例
 
@@ -296,19 +404,25 @@ echo $be->restart('testproc');
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->status('testproc');
+print_r($be->status('testproc'));
 ```
 
 
 #### statusall - 查询所有后台进程状态
 
 ###### 定义
-	string statusall()
+	array statusall($setting)
+
+###### 参数
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	返回所有进程的运行状态。
-	UP表示正在运行；
-	DOWN表示进程不存在或已停止。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        所有进程状态数组
 
 ###### 示例
 
@@ -324,19 +438,26 @@ Array
     [testproc] => UP
 )
 */
-print_r($be->statusall());
+$result = $be->statusall();
+print_r($result['data']);
 ```
 
 
 #### read - 读取进程输出缓冲
 ###### 定义
-	string read($jobname)
+	array read($jobname, $setting)
 
 ###### 参数
-	$jobname：要读取的进程名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	进程名称为$jobname的输出缓冲区内容。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程输出缓冲区内容
 
 ###### 示例
 
@@ -345,20 +466,27 @@ print_r($be->statusall());
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->read('testproc');
+$result = $be->read('testproc');
+print_r($result);
 ```
 
 
 #### mem - 查询进程的内存使用量
 
 ###### 定义
-	string mem($jobname)
+	array mem($jobname, $setting, $setting)
 
 ###### 参数
-	$jobname：要获取内存使用量的进程名称
+	$jobname         进程名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	进程的内存使用量，单位为 kB。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程的内存使用量，单位为 kB
 
 ###### 示例
 
@@ -367,17 +495,25 @@ echo $be->read('testproc');
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->mem('testproc');
+print_r($be->mem('testproc'));
 ```
 
 
 #### memall - 查询所有进程的内存使用量
 
 ###### 定义
-	string memall()
+	array memall($setting)
+
+###### 参数
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	所有进程的内存使用量，单位为 kB。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        所有进程的内存使用量，单位为 kB
 
 ###### 示例
 
@@ -393,17 +529,26 @@ Array
     [testproc] => 9464
 )
 */
-echo $be->memall();
+$result = $be->memall();
+print_r($result['data']);
 ```
 
 
 #### servermem - 查询进程服务器的内存使用量
 
 ###### 定义
-	string servermem()
+	array servermem($setting)
+
+###### 参数
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	进程服务器的内存使用量，单位为 kB。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程服务器的内存使用量，单位为 kB
 
 ###### 示例
 
@@ -412,17 +557,25 @@ echo $be->memall();
 require_once('Backend.class.php');
 
 $be = new Backend();
-echo $be->servermem();
+print_r($be->servermem());
 ```
 
 
 #### serverread - 读取进程服务器的输出
 
 ###### 定义
-	string serverread()
+	array serverread($setting)
+
+###### 参数
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
 
 ###### 返回
-	进程服务器的输出缓冲区内容。
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程服务器的输出缓冲区内容
 
 ###### 示例
 
@@ -433,7 +586,7 @@ require_once('Backend.class.php');
 $be = new Backend();
 
 /* 输出示例：
-Plugin "autostart" loaded.
+[13-06-18 20:54:08] Plugin "autostart" loaded.
 [13-06-18 20:54:08] Backend server starting, binding 127.0.0.1:13123.
 [13-06-18 20:54:08] 
 [13-06-18 20:54:08] 
@@ -445,8 +598,132 @@ Plugin "autostart" loaded.
 [13-06-18 20:54:10] SERVERREAD
 [13-06-18 20:54:10]
 */
-echo $be->serverread();
+$result = $be->serverread();
+print_r($result['data']);
 ```
+
+
+#### auth_getenable - 获取是否启用身份验证
+
+###### 定义
+	array auth_getenable($setting)
+
+###### 参数
+    $setting         程序执行设置
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code, 'data'=>$data)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+       - data       是否启用身份验证, TRUE/FALSE
+
+
+#### auth_setenable - 设置身份验证启用/禁用
+
+###### 定义
+	array auth_setenable($enable, $setting)
+
+###### 参数
+	$enable          TRUE：启用 FALSE：禁用
+    $setting         程序执行设置
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+
+
+#### auth_add - 添加用户
+
+###### 定义
+	array auth_add($username, $password, $privileges, $setting)
+
+###### 参数
+	$username        用户名
+	$password        密码
+	$privileges      权限，用逗号分隔，*表示所有权限
+    $setting         程序执行设置&更多用户配置
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+       剩余值将作为用户配置项
+
+###### 返回
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+
+
+#### auth_delete - 删除用户
+
+###### 定义
+	array auth_delete($username, $setting)
+
+###### 参数
+	$username        用户名
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+	                删除成功返回OK，删除失败返回FAILED。
+	                进程不存在，进程还在运行，都将返回FAILED。
+	                删除配置时不会删除日志文件。
+
+
+#### auth_update - 更新用户信息
+
+###### 定义
+	array auth_update($username, $setting)
+
+###### 参数
+	$username        用户名
+	$setting         程序执行设置，同 add
+
+###### 返回
+    array('code'=>$code)
+       - code       'OK', 'FAILED', 'DENIED'（auth插件）
+
+
+#### auth_get - 查询单个用户信息
+
+###### 定义
+	array auth_get($username, $setting)
+
+###### 参数
+	$jobname         要查看的进程的名称
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        用户信息数组
+
+
+#### auth_getall - 查询所有用户信息
+
+###### 定义
+	array auth_getall($setting)
+
+###### 参数
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        所有用户的信息数组
 
 
 ## 相关资源：PHP 后台进程控制面板
