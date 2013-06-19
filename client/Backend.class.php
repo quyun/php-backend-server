@@ -41,7 +41,7 @@ Class Backend
      *    剩余值也将作为进程配置项
 	 *
 	 * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -65,7 +65,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -94,7 +94,7 @@ Class Backend
      *    剩余值也将作为进程配置项
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -117,7 +117,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        进程信息数组
      *
@@ -140,7 +140,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        所有进程的信息数组
      *
@@ -160,7 +160,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -183,7 +183,7 @@ Class Backend
      *
      * 返回值：
      * 
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED'
      *
      */
@@ -205,7 +205,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -227,7 +227,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        UP（正常）、DOWN（未启动）
      *
@@ -250,7 +250,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        所有进程状态数组
      *
@@ -270,7 +270,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        进程输出缓冲区内容
      *
@@ -293,7 +293,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        内存占用量，单位为 kB
      *
@@ -316,7 +316,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        所有进程的内存占用量数组，单位为 kB
      *
@@ -336,7 +336,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        进程服务器的内存占用量，单位为kB
      *
@@ -356,7 +356,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        进程服务器输出缓冲区内容
      *
@@ -376,7 +376,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        是否启用身份验证, TRUE/FALSE
      *
@@ -397,9 +397,8 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
-     *    - data        是否启用身份验证, TRUE/FALSE
      *
      */
     public function auth_setenable($enable, $setting=array())
@@ -424,7 +423,7 @@ Class Backend
      *    剩余值将作为用户配置项
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -449,7 +448,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -462,7 +461,7 @@ Class Backend
     }
 
     /*
-     * 更新进程
+     * 更新用户信息
      *
      * 参数：
      * $username        用户名
@@ -475,7 +474,7 @@ Class Backend
      *    剩余值将作为用户配置项
      *
      * 返回值：
-     * array('code': $code)
+     * array('code'=>$code)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
@@ -498,7 +497,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        用户信息数组
      *
@@ -521,7 +520,7 @@ Class Backend
      *      - password    密码
      *
      * 返回值：
-     * array('code': $code, 'data'=>$data)
+     * array('code'=>$code, 'data'=>$data)
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *    - data        所有用户的信息数组
      *
