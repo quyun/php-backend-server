@@ -188,11 +188,27 @@ class BackendServer
         }
 
         $this->shm->lock();
+
+        // 检测共享内存中是否存在垃圾进程信息
         if (!$this->shm->has_var('pids'))
         {
             $pids = array();
-            $this->shm->put_var('pids', $pids);
         }
+        else
+        {
+            $pids = $this->shm->get_var('pids');
+            foreach ($pids as $jobname=>$pid)
+            {
+                // 删除不存在的进程信息
+                if (!$this->process_exists($pid))
+                {
+                    unset($pids[$jobname]);
+                    $this->shm->remove_var('ob_'.$jobname);
+                }
+            }
+        }
+
+        $this->shm->put_var('pids', $pids);
         $this->shm->unlock();
 
         return TRUE;
@@ -219,7 +235,7 @@ class BackendServer
                 $this->server_echo('socket_accept() failed.');
                 break;
             }
-            
+
             // 读取输入
             $bin_length = '';
             while (strlen($bin_length) != 4)
@@ -448,6 +464,16 @@ class BackendServer
                 $this->client_return('FAILED');
                 $this->server_echo("FAILED. (process \"$jobname\"({$pid}) has already exist.)");
                 return FALSE;
+            }
+            else
+            {
+                // 检查进程是否回收结束
+                if ($this->shm_process_getpid($jobname))
+                {
+                    $this->client_return('FAILED');
+                    $this->server_echo("FAILED. (process \"$jobname\"({$pid}) is still exiting.)");
+                    return FALSE;
+                }
             }
         }
 
