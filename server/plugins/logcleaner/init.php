@@ -75,6 +75,7 @@ class Logcleaner
             while (($file = readdir($handle)) !== FALSE)
             {
                 if ($file == "." || $file == "..") continue;
+                if (strpos($file, '__') === 0) continue;
 
                 $item_count++;
 
