@@ -10,5 +10,5 @@ $server = new BackendServer(array(
     'server_ip'   => $server_ip,
     'server_port' => $server_port,
 ));
-$server->load_plugins($autoload_plugins);
+$server->load_plugins($autoload_plugins, $plugin_settings);
 $server->run();

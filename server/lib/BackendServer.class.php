@@ -40,7 +40,7 @@ class BackendServer
     }
 
     // 批量加载插件
-    public function load_plugins($plugin_names)
+    public function load_plugins($plugin_names, $plugin_settings)
     {
         if (!($handle = opendir($this->plugins_path))) return FALSE;
 
@@ -49,7 +49,8 @@ class BackendServer
             while (($file = readdir($handle)) != FALSE)
             {
                 if ($file == '.' || $file == '..') continue;
-                $this->load_plugin($file);
+                $plugin_setting = isset($plugin_settings[$file]) ? $plugin_settings[$file] : array();
+                $this->load_plugin($file, $plugin_setting);
             }
 
             closedir($handle);
@@ -61,7 +62,8 @@ class BackendServer
             {
                 $plugin_name = trim($plugin_name);
                 if (!$plugin_name) continue;
-                $this->load_plugin($plugin_name);
+                $plugin_setting = isset($plugin_settings[$plugin_name]) ? $plugin_settings[$plugin_name] : array();
+                $this->load_plugin($plugin_name, $plugin_setting);
             }
         }
 
@@ -69,7 +71,7 @@ class BackendServer
     }
 
     // 加载插件
-    public function load_plugin($plugin_name)
+    public function load_plugin($plugin_name, $plugin_setting=array())
     {
         $plugin_dir = $this->plugins_path.'/'.$plugin_name;
         if (!is_dir($plugin_dir)) return FALSE;
@@ -85,12 +87,13 @@ class BackendServer
             $class_name = ucfirst($plugin_name);
             if (!class_exists($class_name)) return FALSE;
 
-            $ph = new $class_name($this, array(
+            $plugin_setting = array_merge($plugin_setting, array(
                 'server_ip' => $this->server_ip,
                 'server_port' => $this->server_port,
                 'log_path' => $this->log_path,
                 'plugins_data_path' => $this->plugins_data_path,
             ));
+            $ph = new $class_name($this, $plugin_setting);
             $this->plugins[$plugin_name] = $ph;
 
             if (method_exists($ph, 'on_server_inited'))

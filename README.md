@@ -39,6 +39,14 @@ $timezone = 'Asia/Shanghai';
 
 // 选择要自动加载的插件，用逗号分隔，*表示所有插件
 $autoload_plugins = '*';
+
+// 插件配置
+$plugin_settings = array(
+    'logcleaner' => array(              // logcleaner插件配置
+        'clean_interval' => 3600,       // 清理间隔时间
+        'logfile_expire' => 86400*7,    // 日志过期时间
+    ),
+);
 ```
 
 请确保 server/data 目录可写入。
