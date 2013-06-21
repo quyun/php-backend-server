@@ -129,7 +129,9 @@ class BackendServer
 
         if (function_exists('fildes_dup2'))
         {
-            $errorlog_fd = fopen($this->log_path.'/server.error.log', 'a+');
+            $errorlog_path = $this->log_path.'/server/error';
+            if (!is_dir($errorlog_path)) mkdir($errorlog_path, 0777);
+            $errorlog_fd = fopen($errorlog_path.'/error.log', 'a+');
             fildes_dup2(fildes_fileno($errorlog_fd), fildes_fileno(STDERR));   
         }
 
@@ -821,7 +823,23 @@ class BackendServer
         if (!$this->cnt) return FALSE;
         $result = array('code'=>$code);
         if (!is_null($data)) $result['data'] = $data;
-        return socket_write($this->cnt, json_encode($result));
+
+        $result_str = json_encode($result);
+        $length = pack('I', strlen($result_str));
+
+        $package = $length.$result_str;
+        $package_length = strlen($package);
+
+        while (TRUE)
+        {
+            $sent = socket_write($this->cnt, $package, $package_length);
+
+            if ($sent === FALSE) return FALSE;
+            if ($sent == $package_length) return TRUE;
+
+            $package = substr($package, $sent);
+            $package_length -= $sent;
+        }
     }
 
     // 服务器输出
@@ -832,7 +850,11 @@ class BackendServer
 
         $this->server_ob[] = $str;
         $this->server_ob = array_slice($this->server_ob, -20, 20);
-        $server_logfile = $this->log_path.'/server.'.date('YmdH').'.log';
+        $server_logpath = $this->log_path.'/server/';
+        $server_daily_logpath = $server_logpath.'/'.date('Ymd');
+        if (!is_dir($server_logpath)) mkdir($server_logpath, 0777);
+        if (!is_dir($server_daily_logpath)) mkdir($server_daily_logpath, 0777);
+        $server_logfile = $server_daily_logpath.'/'.date('YmdH').'.log';
         file_put_contents($server_logfile, $str, FILE_APPEND);
 
         if (!$this->server_muted && posix_ttyname(STDOUT)) echo $str;

@@ -531,25 +531,172 @@ Class Backend
     }
 
     /*
+     * 查询进程的日志目录列表
+     *
+     * 参数：
+     * $jobname         进程名称
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        日志目录列表
+     *
+     */
+    public function logexplorer_listdir($jobname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+        ));
+        return $this->_cmd('LOGEXPLORER.LISTDIR', $p);
+    }
+
+    /*
+     * 查询进程某个日志目录下的日志列表
+     *
+     * 参数：
+     * $jobname         进程名称
+     * $dirname         日志目录名
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        日志文件列表
+     *
+     */
+    public function logexplorer_listfile($jobname, $dirname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+            'dirname' => $dirname,
+        ));
+        return $this->_cmd('LOGEXPLORER.LISTFILE', $p);
+    }
+
+    /*
+     * 读取进程某个日志文件内容
+     *
+     * 参数：
+     * $jobname         进程名称
+     * $dirname         日志目录名
+     * $filename        日志文件名
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        日志内容
+     *
+     */
+    public function logexplorer_get($jobname, $dirname, $filename, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+            'dirname' => $dirname,
+            'filename' => $filename,
+        ));
+        return $this->_cmd('LOGEXPLORER.GET', $p);
+    }
+
+    /*
+     * 查询服务器的日志目录列表
+     *
+     * 参数：
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        日志目录列表
+     *
+     */
+    public function logexplorer_serverlistdir($setting=array())
+    {
+        return $this->_cmd('LOGEXPLORER.SERVERLISTDIR', $setting);
+    }
+
+    /*
+     * 查询服务器某个日志目录下的日志列表
+     *
+     * 参数：
+     * $dirname         日志目录名
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        日志文件列表
+     *
+     */
+    public function logexplorer_serverlistfile($dirname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'dirname' => $dirname,
+        ));
+        return $this->_cmd('LOGEXPLORER.SERVERLISTFILE', $p);
+    }
+
+    /*
+     * 读取服务器日志文件内容
+     *
+     * 参数：
+     * $dirname         日志目录名
+     * $filename        日志文件名
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        日志内容
+     *
+     */
+    public function logexplorer_serverget($dirname, $filename, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'dirname' => $dirname,
+            'filename' => $filename,
+        ));
+        return $this->_cmd('LOGEXPLORER.SERVERGET', $p);
+    }
+
+    /*
      * 执行命令并返回结果
      */
     private function _cmd($cmd, $params=NULL)
     {
-        if (!($sock = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)))
-        {
-            // echo "socket_create() failed.\n";
-            return FALSE;
-        }
-
-        if (!@socket_connect($sock, $this->server_ip, $this->server_port))
-        {
-            // echo "socket_connect() failed.\n";
-            return FALSE;
-        }
+        if (!($sock = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP))) return FALSE;
+        if (!@socket_connect($sock, $this->server_ip, $this->server_port)) return FALSE;
 
         $primitive = $params ? "$cmd ".json_encode($params) : $cmd;
         socket_write($sock, $primitive);
-        $result = socket_read($sock, 10240);
+        $bin_length = socket_read($sock, 4, PHP_BINARY_READ);
+        list(, $length, ) = unpack('I', $bin_length);
+        
+        $result = '';
+        while (strlen($result) != $length)
+        {
+            $result .= socket_read($sock, $length-strlen($result), PHP_BINARY_READ);   
+        }
+
         socket_close($sock);
 
         $result = json_decode($result, TRUE);
