@@ -17,6 +17,6 @@ $plugin_settings = array(
         'logfile_expire' => 86400*7,    // 日志过期时间
     ),
     'guard' => array(                   // guard插件配置
-        'check_interval' => 1,         // 检测间隔时间
+        'check_interval' => 60,         // 检测间隔时间
     ),
 );
