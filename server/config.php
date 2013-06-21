@@ -16,4 +16,7 @@ $plugin_settings = array(
         'clean_interval' => 3600,       // 清理间隔时间
         'logfile_expire' => 86400*7,    // 日志过期时间
     ),
+    'guard' => array(                   // guard插件配置
+        'check_interval' => 1,         // 检测间隔时间
+    ),
 );
