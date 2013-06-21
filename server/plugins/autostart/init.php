@@ -3,7 +3,8 @@
 /*
  * 进程自动启动插件
  *
- * 该插件会对 START/UPDATE 指令中的 autostart 参数进行处理
+ * 该插件会对 ADD/UPDATE 指令中的 autostart 参数进行处理
+ * 带有 autostart 标记的进程，在服务器启动时将随服务器一起启动
  */
 
 class Autostart
