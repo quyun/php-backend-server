@@ -686,11 +686,32 @@ Class Backend
         if (!($sock = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP))) return FALSE;
         if (!@socket_connect($sock, $this->server_ip, $this->server_port)) return FALSE;
 
+        // 发送
         $primitive = $params ? "$cmd ".json_encode($params) : $cmd;
-        socket_write($sock, $primitive);
-        $bin_length = socket_read($sock, 4, PHP_BINARY_READ);
+        $length = strlen($primitive);
+        $length = pack('I', $length);
+
+        $package = $length.$primitive;
+        $package_length = strlen($package);
+        while (TRUE)
+        {
+            $sent = socket_write($sock, $package, $package_length);
+
+            if ($sent === FALSE) return FALSE;
+            if ($sent == $package_length) break;
+
+            $package = substr($package, $sent);
+            $package_length -= $sent;
+        }
+
+        // 接收
+        $bin_length = '';
+        while (strlen($bin_length) != 4)
+        {
+            $bin_length .= socket_read($sock, 4-strlen($bin_length), PHP_BINARY_READ);
+        }
         list(, $length, ) = unpack('I', $bin_length);
-        
+
         $result = '';
         while (strlen($result) != $length)
         {

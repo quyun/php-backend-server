@@ -221,10 +221,31 @@ class BackendServer
             }
             
             // 读取输入
-            if (!($input = @socket_read($this->cnt, 1024))) {
-                $this->server_echo('socket_read() failed.');
-                break;
+            $bin_length = '';
+            while (strlen($bin_length) != 4)
+            {
+                $bin_length .= @socket_read($this->cnt, 4-strlen($bin_length), PHP_BINARY_READ); 
+                if ($bin_length === FALSE)
+                {
+                    $this->server_echo('socket_read() failed.');
+                    break;
+                }
             }
+            if (strlen($bin_length) != 4) break;
+            list(, $length, ) = unpack('I', $bin_length);
+
+            $input = '';
+            while (strlen($input) != $length)
+            {
+                $read = @socket_read($this->cnt, $length-strlen($input), PHP_BINARY_READ);
+                if ($read === FALSE)
+                {
+                    $this->server_echo('socket_read() failed.');
+                    break;
+                }
+                $input .= $read;
+            }
+            if (strlen($input) != $length) break;
 
             $this->server_echo($input);
 
@@ -256,14 +277,6 @@ class BackendServer
     // 执行命令
     private function run_command($cmd, $params)
     {
-        if ($this->event_handlers['command_received'])
-        {
-            foreach ($this->event_handlers['command_received'] as $handler)
-            {
-                if (!call_user_func($handler, $cmd, $params)) return FALSE;
-            }
-        }
-
         if (in_array($cmd, array('ADD', 'DELETE', 'UPDATE', 'GET', 'START', 'STOP', 'RESTART', 'STATUS', 'READ', 'MEM')))
         {
             if (!isset($params['jobname']))
@@ -271,6 +284,14 @@ class BackendServer
                 $this->client_return('FAILED');
                 $this->server_echo('FAILED. (jobname is required.)');
                 return FALSE;
+            }
+        }
+
+        if ($this->event_handlers['command_received'])
+        {
+            foreach ($this->event_handlers['command_received'] as $handler)
+            {
+                if (!call_user_func($handler, $cmd, $params)) return FALSE;
             }
         }
 
