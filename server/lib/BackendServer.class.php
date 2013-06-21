@@ -9,10 +9,10 @@ require_once(dirname(__FILE__) . '/ProcessContainer.class.php');
 class BackendServer
 {
     public  $config = NULL;             // 进程配置对象
+    public  $shm = NULL;                // 共享内存
 
     private $socket = NULL;             // socket
     private $cnt = NULL;                // 当前socket连接
-    private $shm = NULL;                // 共享内存
     private $server_ob = array();       // 服务器输出缓冲
     private $server_muted = FALSE;      // 服务器不输出标志
 
@@ -23,6 +23,7 @@ class BackendServer
     private $event_handlers = array(    // 事件处理函数
         'server_inited' => array(),     // 服务器初始化完毕
         'command_received' => array(),  // 接收到命令
+        'command_finished' => array(),  // 命令执行完成
     );
     private $plugins = array();         // 插件对象列表
 
@@ -103,6 +104,10 @@ class BackendServer
             if (method_exists($ph, 'on_command_received'))
             {
                 $this->event_handlers['command_received'][] = array($ph, 'on_command_received');
+            }
+            if (method_exists($ph, 'on_command_finished'))
+            {
+                $this->event_handlers['command_finished'][] = array($ph, 'on_command_finished');
             }
 
             $this->server_echo("Plugin \"{$plugin_name}\" loaded.");
@@ -272,7 +277,15 @@ class BackendServer
         $cmdfunc = 'command_'.strtolower($cmd);
         if (method_exists($this, $cmdfunc))
         {
-            call_user_func(array($this, $cmdfunc), $params);
+            $result = call_user_func(array($this, $cmdfunc), $params);
+
+            if ($this->event_handlers['command_finished'])
+            {
+                foreach ($this->event_handlers['command_finished'] as $handler)
+                {
+                    if (!call_user_func($handler, $cmd, $params, $result)) return FALSE;
+                }
+            }
         }
         else
         {
@@ -878,7 +891,7 @@ class BackendServer
     }
 
     // 检查进程是否存在
-    private function process_exists($pid)
+    public function process_exists($pid)
     {
         if (!$pid) return FALSE;
 
@@ -895,7 +908,7 @@ class BackendServer
     }
 
     // 返回进程占用的实际内存值
-    private function memory_get_usage($pid) 
+    public function memory_get_usage($pid) 
     {
         $status = file_get_contents("/proc/{$pid}/status");
         if (!$status) return 0;
