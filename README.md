@@ -46,7 +46,7 @@ $plugin_settings = array(
         'clean_interval' => 3600,       // 清理间隔时间
         'logfile_expire' => 86400*7,    // 日志过期时间
     ),
-    'guard' => array(                   // guard插件配置
+    'guarder' => array(                 // guarder插件配置
         'check_interval' => 60,         // 检测间隔时间
     ),
 );
@@ -150,7 +150,7 @@ $be->init('127.0.0.1', 13123); // 显示初始化服务器IP和端口
        - buffersize  缓冲区行数，默认为20行
        - writelog    是否将进程输出写入日志，默认为否
        - autostart   是否随服务器启动（autostart插件参数）
-       - guard       是否监控该进程，非人为退出后自动启动（guard插件参数）
+       - guard       是否监控该进程，非人为退出后自动启动（guarder插件参数）
        - auth        auth插件参数
          - username  用户名
          - password  密码

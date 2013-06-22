@@ -6,7 +6,7 @@
  * 该插件在检测到进程状态因为非人为因素变为DOWN时，立即启动该进程
  */
 
-class Guard
+class Guarder
 {
     private $server = NULL;                 // 后台进程服务器对象
     private $gurading_jobnames = array();   // 受监控的进程名称列表，以进程名为键，值固定为TRUE
@@ -26,7 +26,7 @@ class Guard
         $pid = pcntl_fork();
         if ($pid == -1)
         {
-            $this->server_echo('[guard] init failed.');
+            $this->server_echo('[guarder] init failed.');
             return FALSE;
         }
         else if ($pid)    // 父进程
@@ -107,7 +107,7 @@ class Guard
             $pid = isset($pids[$jobname]) ? $pids[$jobname] : FALSE;
             if (!$pid || !$this->server->process_exists($pid))
             {
-                $this->server->server_echo(getmypid()."[guard] starting \"{$jobname}\"...");
+                $this->server->server_echo(getmypid()."[guarder] starting \"{$jobname}\"...");
                 $this->server->command_start(array('jobname'=>$jobname, 'newline'=>FALSE));
             }
         }
