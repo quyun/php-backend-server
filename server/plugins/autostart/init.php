@@ -7,7 +7,7 @@
  * 带有 autostart 标记的进程，在服务器启动时将随服务器一起启动
  */
 
-class Autostart
+class AutostartPlugin
 {
     private $server = NULL;        // 后台进程服务器对象
 

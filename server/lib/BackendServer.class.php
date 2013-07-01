@@ -85,7 +85,7 @@ class BackendServer
             require_once($initfile);
             ob_end_clean();
 
-            $class_name = ucfirst($plugin_name);
+            $class_name = ucfirst($plugin_name).'Plugin';
             if (!class_exists($class_name)) return FALSE;
 
             $plugin_setting = array_merge($plugin_setting, array(

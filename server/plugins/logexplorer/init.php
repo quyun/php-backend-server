@@ -1,5 +1,5 @@
 <?php
-require_once(dirname(__FILE__).'/Log.class.php');
+require_once(dirname(__FILE__).'/Logexplorer.class.php');
 
 /*
  * 身份认证插件
@@ -7,7 +7,7 @@ require_once(dirname(__FILE__).'/Log.class.php');
  * 该插件会对所有指令进行身份认证，如果认证失败返回DENIED
  */
 
-class Logexplorer
+class LogexplorerPlugin
 {
     private $server = NULL;        // 后台进程服务器对象
     private $log_path = NULL;      // 后台进程服务器日志目录
@@ -43,7 +43,7 @@ class Logexplorer
         if (!$this->_require($params, 'jobname')) return FALSE;
         $jobname = $params['jobname'];
 
-        $log = new Log($this->log_path.'/jobs/'.$jobname);
+        $log = new Logexplorer($this->log_path.'/jobs/'.$jobname);
         $result = $log->listdir('desc');
         return $this->_echo_result(TRUE, $result);
     }
@@ -55,7 +55,7 @@ class Logexplorer
         $jobname = $params['jobname'];
         $dirname = $params['dirname'];
 
-        $log = new Log($this->log_path.'/jobs/'.$jobname);
+        $log = new Logexplorer($this->log_path.'/jobs/'.$jobname);
         $result = $log->listfile($dirname, 'desc');
         return $this->_echo_result(TRUE, $result);
     }
@@ -69,14 +69,14 @@ class Logexplorer
         $dirname = $params['dirname'];
         $filename = $params['filename'];
 
-        $log = new Log($this->log_path.'/jobs/'.$jobname);
+        $log = new Logexplorer($this->log_path.'/jobs/'.$jobname);
         $result = $log->get($dirname, $filename);
         return $this->_echo_result(TRUE, $result === FALSE ? NULL : $result);
     }
 
     private function command_logexplorer_serverlistdir($params)
     {
-        $log = new Log($this->log_path.'/server');
+        $log = new Logexplorer($this->log_path.'/server');
         $result = $log->listdir('desc');
         return $this->_echo_result(TRUE, $result);
     }
@@ -86,7 +86,7 @@ class Logexplorer
         if (!$this->_require($params, 'dirname')) return FALSE;
         $dirname = $params['dirname'];
 
-        $log = new Log($this->log_path.'/server');
+        $log = new Logexplorer($this->log_path.'/server');
         $result = $log->listfile($dirname, 'desc');
         return $this->_echo_result(TRUE, $result);
     }
@@ -98,7 +98,7 @@ class Logexplorer
         $dirname = $params['dirname'];
         $filename = $params['filename'];
 
-        $log = new Log($this->log_path.'/server');
+        $log = new Logexplorer($this->log_path.'/server');
         $result = $log->get($dirname, $filename);
         return $this->_echo_result(TRUE, $result === FALSE ? NULL : $result);
     }

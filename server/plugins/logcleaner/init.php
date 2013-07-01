@@ -6,7 +6,7 @@
  * 该插件会定时清理过期的日志文件
  */
 
-class Logcleaner
+class LogcleanerPlugin
 {
     private $server = NULL;             // 后台进程服务器对象
     private $log_path = NULL;           // 后台进程服务器日志目录

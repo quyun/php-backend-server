@@ -6,7 +6,7 @@
  * 该插件在检测到进程状态因为非人为因素变为DOWN时，立即启动该进程
  */
 
-class Guarder
+class GuarderPlugin
 {
     private $server = NULL;                 // 后台进程服务器对象
     private $gurading_jobnames = array();   // 受监控的进程名称列表，以进程名为键，值固定为TRUE

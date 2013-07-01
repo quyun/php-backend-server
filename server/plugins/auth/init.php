@@ -7,7 +7,7 @@ require_once(dirname(__FILE__).'/AuthConfig.class.php');
  * 该插件会对所有指令进行身份认证，如果认证失败返回DENIED
  */
 
-class Auth
+class AuthPlugin
 {
     private $server = NULL;        // 后台进程服务器对象
     private $data_path = NULL;     // 插件数据保存目录
