@@ -75,22 +75,22 @@ print_r($be->read('test'));
 
 ```
 Class Backend
-- void init($server_ip, $server_port)                            初始化服务器信息
-- array add($jobname, $command, $setting)                        添加进程配置
-- array delete($jobname, $setting)                               删除进程配置
-- array update($jobname, $setting, $setting)                     更新进程配置
-- array get($jobname, $setting)                                  查看进程配置
-- array getall($setting)                                         查看所有进程配置
-- array start($jobname, $setting)                                开启进程
-- array stop($jobname, $setting)                                 结束进程
-- array restart($jobname, $setting)                              重启进程
-- array status($jobname, $setting)                               查询后台进程状态
-- array statusall($setting)                                      查询所有后台进程状态
-- array read($jobname, $setting)                                 读取进程输出缓冲
-- array mem($jobname, $setting, $setting)                        查询进程的内存使用量
-- array memall($setting)                                         查询所有进程的内存使用量
-- array servermem($setting)                                      查询进程服务器的内存使用量
-- array serverread($setting)                                     读取进程服务器的输出
+- void init($server_ip, $server_port)           初始化服务器信息
+- array add($jobname, $command, $setting)       添加进程配置
+- array delete($jobname, $setting)              删除进程配置
+- array update($jobname, $setting, $setting)    更新进程配置
+- array get($jobname, $setting)                 查看进程配置
+- array getall($setting)                        查看所有进程配置
+- array start($jobname, $setting)               开启进程
+- array stop($jobname, $setting)                结束进程
+- array restart($jobname, $setting)             重启进程
+- array status($jobname, $setting)              查询后台进程状态
+- array statusall($setting)                     查询所有后台进程状态
+- array read($jobname, $setting)                读取进程输出缓冲
+- array mem($jobname, $setting, $setting)       查询进程的内存使用量
+- array memall($setting)                        查询所有进程的内存使用量
+- array servermem($setting)                     查询进程服务器的内存使用量
+- array serverread($setting)                    读取进程服务器的输出
 - array auth_getenable($setting)                                 (auth插件) 获取是否启用身份验证
 - array auth_setenable($enable, $setting)                        (auth插件) 设置身份验证启用/禁用
 - array auth_add($username, $password, $privileges, $setting)    (auth插件) 添加用户
@@ -98,12 +98,17 @@ Class Backend
 - array auth_update($username, $setting)                         (auth插件) 更新用户信息
 - array auth_get($username, $setting)                            (auth插件) 查询单个用户信息
 - array auth_getall($setting)                                    (auth插件) 查询所有用户信息
-- array logexplorer_listdir($jobname, $setting)                  (logexplorer插件) 查询进程的日志目录列表
-- array logexplorer_listfile($jobname, $dirname, $setting)       (logexplorer插件) 查询进程某个日志目录下的日志列表
-- array logexplorer_get($jobname, $dirname, $filename, $setting) (logexplorer插件) 读取进程某个日志文件内容
-- array logexplorer_serverlistdir($setting)                      (logexplorer插件) 查询服务器的日志目录列表
-- array logexplorer_serverlistfile($dirname, $setting)           (logexplorer插件) 查询服务器某个日志目录下的日志列表
-- array logexplorer_serverget($dirname, $filename, $setting)     (logexplorer插件) 读取服务器日志文件内容
+- array logexplorer_listdir($jobname, $setting)                         (logexplorer插件) 查询进程的日志目录列表
+- array logexplorer_listfile($jobname, $dirname, $setting)              (logexplorer插件) 查询进程某个日志目录下的日志列表
+- array logexplorer_get($jobname, $dirname, $filename, $setting)        (logexplorer插件) 读取进程某个日志文件内容
+- array logexplorer_serverlistdir($setting)                             (logexplorer插件) 查询服务器的日志目录列表
+- array logexplorer_serverlistfile($dirname, $setting)                  (logexplorer插件) 查询服务器某个日志目录下的日志列表
+- array logexplorer_serverget($dirname, $filename, $setting)            (logexplorer插件) 读取服务器日志文件内容
+- array scheduler_add($jobname, $setting)                               (scheduler插件) 添加新的进程调度配置
+- array scheduler_delete($jobname, $setting)                            (scheduler插件) 删除进程调度配置
+- array scheduler_update($jobname, $oldsetting, $newsetting, $setting)  (scheduler插件) 更新进程调度配置
+- array scheduler_get($jobname, $setting)                               (scheduler插件) 查询进程调度配置信息
+- array scheduler_getlog($jobname, $setting)                            (scheduler插件) 查询进程调度执行历史
 ```
 
 ## 客户端类参考
@@ -113,17 +118,17 @@ Class Backend
 #### init - 初始化服务器信息
 
 ###### 定义
-	void init($server_ip, $server_port)
+    void init($server_ip, $server_port)
 
 ###### 参数
-	$server_ip       服务器IP
-	$server_port     服务器端口
+    $server_ip       服务器IP
+    $server_port     服务器端口
 
 ###### 说明
-	如果不调用init进行初始化，则默认的服务器IP和端口为127.0.0.1:13123。
+    如果不调用init进行初始化，则默认的服务器IP和端口为127.0.0.1:13123。
 
 ###### 返回
-	无返回值。
+    无返回值。
 
 ###### 示例
 
@@ -140,11 +145,11 @@ $be->init('127.0.0.1', 13123); // 显示初始化服务器IP和端口
 #### add - 添加进程配置
 
 ###### 定义
-	array add($jobname, $command, $setting)
+    array add($jobname, $command, $setting)
 
 ###### 参数
-	$jobname         进程名称
-	$command         程序路径
+    $jobname         进程名称
+    $command         程序路径
     $setting         程序执行设置，已知参数如下：
        - params      程序参数
        - buffersize  缓冲区行数，默认为20行
@@ -173,10 +178,10 @@ print_r($be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE)));
 #### delete - 删除进程配置
 
 ###### 定义
-	array delete($jobname, $setting)
+    array delete($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -185,9 +190,9 @@ print_r($be->add('testproc', '/work/www/test.php', array('writelog'=>TRUE)));
 ###### 返回
     array('code'=>$code)
        - code       'OK', 'FAILED', 'DENIED'（auth插件）
-	                删除成功返回OK，删除失败返回FAILED。
-	                进程不存在，进程还在运行，都将返回FAILED。
-	                删除配置时不会删除日志文件。
+                    删除成功返回OK，删除失败返回FAILED。
+                    进程不存在，进程还在运行，都将返回FAILED。
+                    删除配置时不会删除日志文件。
 
 ###### 示例
 
@@ -203,11 +208,11 @@ print_r($be->delete('testproc'));
 #### update - 更新进程配置
 
 ###### 定义
-	array update($jobname, $setting, $setting)
+    array update($jobname, $setting, $setting)
 
 ###### 参数
-	$jobname         进程名称
-	$setting         程序执行设置，同 add
+    $jobname         进程名称
+    $setting         程序执行设置，同 add
 
 ###### 返回
     array('code'=>$code)
@@ -232,10 +237,10 @@ print_r($be->update('testproc', array('writelog'=>FALSE)));
 #### get - 查看进程配置
 
 ###### 定义
-	array get($jobname, $setting)
+    array get($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -272,7 +277,7 @@ print_r($result['data']);
 #### getall - 查看所有进程配置
 
 ###### 定义
-	array getall($setting)
+    array getall($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -316,10 +321,10 @@ print_r($result['data']);
 #### start - 开启进程
 
 ###### 定义
-	array start($jobname, $setting)
+    array start($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -328,7 +333,7 @@ print_r($result['data']);
 ###### 返回
     array('code'=>$code)
        - code       'OK', 'FAILED', 'DENIED'（auth插件）
-	                进程已在运行，或程序路径不存在，都将返回FAILED。
+                    进程已在运行，或程序路径不存在，都将返回FAILED。
 
 ###### 示例
 
@@ -345,10 +350,10 @@ print_r($be->start('testproc'));
 #### stop - 结束进程
 
 ###### 定义
-	array stop($jobname, $setting)
+    array stop($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -357,7 +362,7 @@ print_r($be->start('testproc'));
 ###### 返回
     array('code'=>$code)
        - code       'OK', 'FAILED', 'DENIED'（auth插件）
-	                进程名不存在，或进程已停止，都将返回FAILED。
+                    进程名不存在，或进程已停止，都将返回FAILED。
 
 ###### 示例
 
@@ -373,10 +378,10 @@ print_r($be->stop('testproc'));
 #### restart - 重启进程
 
 ###### 定义
-	array restart($jobname, $setting)
+    array restart($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -385,7 +390,7 @@ print_r($be->stop('testproc'));
 ###### 返回
     array('code'=>$code)
        - code       'OK', 'FAILED', 'DENIED'（auth插件）
-	                进程名不存在，或进程已停止，或程序路径不存在，都将返回FAILED。
+                    进程名不存在，或进程已停止，或程序路径不存在，都将返回FAILED。
 
 ###### 示例
 
@@ -401,10 +406,10 @@ print_r($be->restart('testproc'));
 #### status - 查询后台进程状态
 
 ###### 定义
-	array status($jobname, $setting)
+    array status($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -429,7 +434,7 @@ print_r($be->status('testproc'));
 #### statusall - 查询所有后台进程状态
 
 ###### 定义
-	array statusall($setting)
+    array statusall($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -463,10 +468,10 @@ print_r($result['data']);
 
 #### read - 读取进程输出缓冲
 ###### 定义
-	array read($jobname, $setting)
+    array read($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -492,10 +497,10 @@ print_r($result);
 #### mem - 查询进程的内存使用量
 
 ###### 定义
-	array mem($jobname, $setting, $setting)
+    array mem($jobname, $setting, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -520,7 +525,7 @@ print_r($be->mem('testproc'));
 #### memall - 查询所有进程的内存使用量
 
 ###### 定义
-	array memall($setting)
+    array memall($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -555,7 +560,7 @@ print_r($result['data']);
 #### servermem - 查询进程服务器的内存使用量
 
 ###### 定义
-	array servermem($setting)
+    array servermem($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -582,7 +587,7 @@ print_r($be->servermem());
 #### serverread - 读取进程服务器的输出
 
 ###### 定义
-	array serverread($setting)
+    array serverread($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -624,7 +629,7 @@ print_r($result['data']);
 #### auth_getenable - 获取是否启用身份验证
 
 ###### 定义
-	array auth_getenable($setting)
+    array auth_getenable($setting)
 
 ###### 参数
     $setting         程序执行设置
@@ -641,10 +646,10 @@ print_r($result['data']);
 #### auth_setenable - 设置身份验证启用/禁用
 
 ###### 定义
-	array auth_setenable($enable, $setting)
+    array auth_setenable($enable, $setting)
 
 ###### 参数
-	$enable          TRUE：启用 FALSE：禁用
+    $enable          TRUE：启用 FALSE：禁用
     $setting         程序执行设置
        - auth        auth插件参数
          - username  用户名
@@ -658,12 +663,12 @@ print_r($result['data']);
 #### auth_add - 添加用户
 
 ###### 定义
-	array auth_add($username, $password, $privileges, $setting)
+    array auth_add($username, $password, $privileges, $setting)
 
 ###### 参数
-	$username        用户名
-	$password        密码
-	$privileges      权限，用逗号分隔，*表示所有权限
+    $username        用户名
+    $password        密码
+    $privileges      权限，用逗号分隔，*表示所有权限
     $setting         程序执行设置&更多用户配置
        - auth        auth插件参数
          - username  用户名
@@ -678,10 +683,10 @@ print_r($result['data']);
 #### auth_delete - 删除用户
 
 ###### 定义
-	array auth_delete($username, $setting)
+    array auth_delete($username, $setting)
 
 ###### 参数
-	$username        用户名
+    $username        用户名
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -690,19 +695,19 @@ print_r($result['data']);
 ###### 返回
     array('code'=>$code)
        - code       'OK', 'FAILED', 'DENIED'（auth插件）
-	                删除成功返回OK，删除失败返回FAILED。
-	                进程不存在，进程还在运行，都将返回FAILED。
-	                删除配置时不会删除日志文件。
+                    删除成功返回OK，删除失败返回FAILED。
+                    进程不存在，进程还在运行，都将返回FAILED。
+                    删除配置时不会删除日志文件。
 
 
 #### auth_update - 更新用户信息
 
 ###### 定义
-	array auth_update($username, $setting)
+    array auth_update($username, $setting)
 
 ###### 参数
-	$username        用户名
-	$setting         程序执行设置，同 add
+    $username        用户名
+    $setting         程序执行设置，同 add
 
 ###### 返回
     array('code'=>$code)
@@ -712,10 +717,10 @@ print_r($result['data']);
 #### auth_get - 查询单个用户信息
 
 ###### 定义
-	array auth_get($username, $setting)
+    array auth_get($username, $setting)
 
 ###### 参数
-	$jobname         要查看的进程的名称
+    $jobname         要查看的进程的名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -730,7 +735,7 @@ print_r($result['data']);
 #### auth_getall - 查询所有用户信息
 
 ###### 定义
-	array auth_getall($setting)
+    array auth_getall($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -747,10 +752,10 @@ print_r($result['data']);
 #### logexplorer_listdir - 查询进程的日志目录列表
 
 ###### 定义
-	array logexplorer_listdir($jobname, $setting)
+    array logexplorer_listdir($jobname, $setting)
 
 ###### 参数
-	$jobname         进程名称
+    $jobname         进程名称
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -765,11 +770,11 @@ print_r($result['data']);
 #### logexplorer_listfile - 查询进程某个日志目录下的日志列表
 
 ###### 定义
-	array logexplorer_listfile($jobname, $dirname, $setting)
+    array logexplorer_listfile($jobname, $dirname, $setting)
 
 ###### 参数
-	$jobname         进程名称
-	$dirname         日志目录名
+    $jobname         进程名称
+    $dirname         日志目录名
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -784,12 +789,12 @@ print_r($result['data']);
 #### logexplorer_get - 读取进程某个日志文件内容
 
 ###### 定义
-	array logexplorer_get($jobname, $dirname, $filename, $setting)
+    array logexplorer_get($jobname, $dirname, $filename, $setting)
 
 ###### 参数
-	$jobname         进程名称
-	$dirname         日志目录名
-	$filename        日志文件名
+    $jobname         进程名称
+    $dirname         日志目录名
+    $filename        日志文件名
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -804,7 +809,7 @@ print_r($result['data']);
 #### logexplorer_serverlistdir - 查询服务器的日志目录列表
 
 ###### 定义
-	array logexplorer_serverlistdir($setting)
+    array logexplorer_serverlistdir($setting)
 
 ###### 参数
     $setting         程序执行设置，已知参数如下：
@@ -821,10 +826,10 @@ print_r($result['data']);
 #### logexplorer_serverlistfile - 查询服务器某个日志目录下的日志列表
 
 ###### 定义
-	array logexplorer_serverlistfile($dirname, $setting)
+    array logexplorer_serverlistfile($dirname, $setting)
 
 ###### 参数
-	$dirname         日志目录名
+    $dirname         日志目录名
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -839,11 +844,11 @@ print_r($result['data']);
 #### logexplorer_serverget - 读取服务器日志文件内容
 
 ###### 定义
-	array logexplorer_serverget($dirname, $filename, $setting)
+    array logexplorer_serverget($dirname, $filename, $setting)
 
 ###### 参数
-	$dirname         日志目录名
-	$filename        日志文件名
+    $dirname         日志目录名
+    $filename        日志文件名
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -853,6 +858,103 @@ print_r($result['data']);
     array('code'=>$code, 'data'=>$data)
        - code        'OK', 'FAILED', 'DENIED'（auth插件）
        - data        日志内容
+
+
+#### scheduler_add - 添加新的进程调度配置
+
+###### 定义
+    array scheduler_add($jobname, $setting)
+
+###### 参数
+    $jobname         进程名
+    $setting         程序执行设置，已知参数如下：
+     - enable      是否立即开启调度
+     - condition   调度时间条件设置
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+
+
+#### scheduler_delete - 删除进程调度配置
+
+###### 定义
+    array scheduler_delete($jobname, $setting)
+
+###### 参数
+    $jobname         进程名
+    $setting         程序执行设置，已知参数如下：
+       - enable      是否立即开启调度
+       - condition   调度时间条件设置
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+
+
+#### scheduler_update - 更新进程调度配置
+
+###### 定义
+    array scheduler_update($jobname, $oldsetting, $newsetting, $setting)
+
+###### 参数
+    $jobname         进程名
+    $oldsetting      旧的进程调度配置信息
+       - enable      是否立即开启调度
+       - condition   调度时间条件设置
+    $newsetting      新的进程调度配置信息
+       - enable      是否立即开启调度
+       - condition   调度时间条件设置
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+
+
+#### scheduler_get - 查询进程调度配置信息
+
+###### 定义
+    array scheduler_get($jobname, $setting)
+
+###### 参数
+    $jobname         进程名
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程调度配置信息列表
+
+
+#### scheduler_getlog - 查询进程调度执行历史
+
+###### 定义
+    array scheduler_getlog($jobname, $setting)
+
+###### 参数
+    $jobname         进程名
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程调度执行时间列表
 
 
 

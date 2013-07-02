@@ -679,6 +679,135 @@ Class Backend
     }
 
     /*
+     * 添加新的进程调度配置
+     *
+     * 参数：
+     * $jobname         进程名
+     * $setting         程序执行设置
+     *    - enable      是否立即开启调度
+     *    - condition   调度时间条件设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *
+     */
+    public function scheduler_add($jobname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+        ));
+        return $this->_cmd('SCHEDULER.ADD', $p);
+    }
+
+    /*
+     * 删除进程调度配置
+     *
+     * 参数：
+     * $jobname         进程名
+     * $setting         程序执行设置
+     *    - enable      是否立即开启调度
+     *    - condition   调度时间条件设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *
+     */
+    public function scheduler_delete($jobname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+        ));
+        return $this->_cmd('SCHEDULER.DELETE', $p);
+    }
+
+    /*
+     * 更新进程调度配置
+     *
+     * 参数：
+     * $jobname         进程名
+     * $oldsetting      旧的进程调度配置信息
+     *    - enable      是否立即开启调度
+     *    - condition   调度时间条件设置
+     * $newsetting      新的进程调度配置信息
+     *    - enable      是否立即开启调度
+     *    - condition   调度时间条件设置
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *
+     */
+    public function scheduler_update($jobname, $oldsetting, $newsetting, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+            'oldsetting' => $oldsetting,
+            'newsetting' => $newsetting,
+        ));
+        return $this->_cmd('SCHEDULER.UPDATE', $p);
+    }
+
+    /*
+     * 查询进程调度配置信息
+     *
+     * 参数：
+     * $jobname         进程名
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        进程调度配置信息列表
+     *
+     */
+    public function scheduler_get($jobname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+        ));
+        return $this->_cmd('SCHEDULER.GET', $p);
+    }
+
+    /*
+     * 查询进程调度执行历史
+     *
+     * 参数：
+     * $jobname         进程名
+     * $setting         程序执行设置
+     *    - auth        auth插件参数
+     *      - username  用户名
+     *      - password    密码
+     *
+     * 返回值：
+     * array('code'=>$code, 'data'=>$data)
+     *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
+     *    - data        进程调度执行时间列表
+     *
+     */
+    public function scheduler_getlog($jobname, $setting=array())
+    {
+        $p = array_merge($setting, array(
+            'jobname' => $jobname,
+        ));
+        return $this->_cmd('SCHEDULER.GETLOG', $p);
+    }
+
+    /*
      * 执行命令并返回结果
      */
     private function _cmd($cmd, $params=NULL)
