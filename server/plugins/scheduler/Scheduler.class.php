@@ -37,15 +37,16 @@ class Scheduler
             {
                 // 检测配置是否重复
                 if ($scheduler['condition'] == $setting['condition']) return FALSE;
-            } 
+            }
         }
 
-        $schedulers[] = $setting;
+        $uuid = $this->uuid();
+        $schedulers[$uuid] = $setting;
         $config[$jobname] = $schedulers;
-        return $this->_set($config);
+        return $this->_set($config) ? $uuid : FALSE;
     }
 
-    public function delete_scheduler($jobname, $setting)
+    public function delete_scheduler($jobname, $uuid)
     {
         if (!$this->_check_setting($setting)) return FALSE;
 
@@ -53,43 +54,23 @@ class Scheduler
         $schedulers = isset($config[$jobname]) ? $config[$jobname] : array();
         if (!$schedulers) return FALSE;
 
-        $delete_i = FALSE;
-        foreach ($schedulers as $i=>$scheduler)
-        {
-            if ($scheduler['condition'] == $setting['condition'])
-            {
-                $delete_i = $i;
-                break;
-            }
-        }
-        if ($delete_i === FALSE) return FALSE;
+        unset($schedulers[$uuid]);
 
-        $schedulers = array_splice($schedulers, $delete_i, 1);
         $config[$jobname] = $schedulers;
         return $this->_set($config);
     }
 
-    public function update_scheduler($jobname, $oldsetting, $newsetting)
+    public function update_scheduler($jobname, $uuid, $setting)
     {
-        if (!$this->_check_setting($oldsetting)) return FALSE;
-        if (!$this->_check_setting($newsetting)) return FALSE;
+        if (!$this->_check_setting($setting)) return FALSE;
 
         $config = $this->_get();
         $schedulers = isset($config[$jobname]) ? $config[$jobname] : array();
         if (!$schedulers) return FALSE;
 
-        $update_i = FALSE;
-        foreach ($schedulers as $i=>$scheduler)
-        {
-            if ($scheduler['condition'] == $oldsetting['condition'])
-            {
-                $update_i = $i;
-                break;
-            }
-        }
-        if ($update_i === FALSE) return FALSE;
+        if (!isset($schedulers[$uuid])) return FALSE;
 
-        $schedulers[$update_i] = $newsetting;
+        $schedulers[$uuid] = $newsetting;
         $config[$jobname] = $schedulers;
         return $this->_set($config);
     }
@@ -230,9 +211,10 @@ class Scheduler
         return TRUE;
     }
 
-    public function get_log($jobname)
+    public function get_log($jobname, $uuid)
     {
-        $log_file = $this->log_path.'/'.$jobname.'.log';
+        $job_log_path = $this->log_path.'/'.$jobname;
+        $log_file = $job_log_path.'/'.$uuid.'.log';
         if (!file_exists($log_file))
         {
             $log = array();
@@ -247,9 +229,9 @@ class Scheduler
         return $log;
     }
 
-    public function add_log($jobname, $timestamp)
+    public function add_log($jobname, $uuid, $timestamp)
     {
-        $log = $this->get_log($jobname);
+        $log = $this->get_log($jobname, $uuid);
 
         array_unshift($log, $timestamp);
 
@@ -257,6 +239,11 @@ class Scheduler
         $log = array_slice($log, 0, 50);
 
         $json_str = $this->json_indent(json_encode($log));
+
+        $job_log_path = $this->log_path.'/'.$jobname;
+        if (!file_exists($job_log_path)) mkdir($job_log_path, 0777);
+        $log_file = $job_log_path.'/'.$uuid.'.log';
+
         return file_put_contents($log_file, $json_str) == strlen($json_str);
     }
 
@@ -330,5 +317,28 @@ class Scheduler
         }
 
         return $result;
+    }
+
+    private function uuid()
+    {
+        return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            // 32 bits for "time_low"
+            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+
+            // 16 bits for "time_mid"
+            mt_rand( 0, 0xffff ),
+
+            // 16 bits for "time_hi_and_version",
+            // four most significant bits holds version number 4
+            mt_rand( 0, 0x0fff ) | 0x4000,
+
+            // 16 bits, 8 bits for "clk_seq_hi_res",
+            // 8 bits for "clk_seq_low",
+            // two most significant bits holds zero and one for variant DCE1.1
+            mt_rand( 0, 0x3fff ) | 0x8000,
+
+            // 48 bits for "node"
+            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
+        );
     }
 }

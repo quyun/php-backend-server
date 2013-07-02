@@ -22,6 +22,7 @@ class SchedulerPlugin
         'SCHEDULER.DELETE',
         'SCHEDULER.UPDATE',
         'SCHEDULER.GET',
+        'SCHEDULER.GETALL',
         'SCHEDULER.GETLOG',
     );
 
@@ -149,10 +150,12 @@ class SchedulerPlugin
 
             // 执行
             $node_info = explode(':', $schedule_node);
-            array_pop($node_info);
+            $uuid = array_pop($node_info);
             $jobname = implode(':', $node_info);
-            echo 'aaa';
             $this->server->command_start(array('jobname'=>$jobname, 'newline'=>FALSE));
+
+            // 写日志
+            $this->scheduler->add_log($jobname, $uuid, $now);
         }
 
     }
@@ -203,14 +206,14 @@ class SchedulerPlugin
         $jobs = $this->scheduler->get_all_schedulers();
         foreach ($jobs as $jobname=>$schedulers)
         {
-            foreach ($schedulers as $i=>$scheduler)
+            foreach ($schedulers as $uuid=>$scheduler)
             {
                 if ($scheduler['enable'])
                 {
                     $condition = $scheduler['condition'];
                     foreach ($condition as $field=>$value)
                     {
-                        $schedule_node = "{$jobname}:{$i}";
+                        $schedule_node = "{$jobname}:{$uuid}";
                         $this->schedule_list[$field][$value][] = $schedule_node;
                         $this->time_field_schedules[$field][] = $schedule_node;
                     }
@@ -241,49 +244,57 @@ class SchedulerPlugin
             'enable' => $params['enable'],
             'condition' => $params['condition'],
         ));
-        return $this->_echo_result($result);
+        return $this->_echo_result($result, $result === FALSE ? NULL : $result);
     }
 
     private function command_scheduler_delete($params)
     {
         if (!$this->_require($params, 'jobname')) return FALSE;
-        if (!$this->_require($params, 'enable')) return FALSE;
-        if (!$this->_require($params, 'condition')) return FALSE;
+        if (!$this->_require($params, 'uuid')) return FALSE;
         $jobname = $params['jobname'];
 
-        $result = $this->scheduler->delete_scheduler($jobname, array(
-            'enable' => $params['enable'],
-            'condition' => $params['condition'],
-        ));
+        $result = $this->scheduler->delete_scheduler($jobname, $params['uuid']);
         return $this->_echo_result($result);
     }
 
     private function command_scheduler_update($params)
     {
         if (!$this->_require($params, 'jobname')) return FALSE;
-        if (!$this->_require($params, 'oldsetting')) return FALSE;
-        if (!$this->_require($params, 'newsetting')) return FALSE;
+        if (!$this->_require($params, 'uuid')) return FALSE;
+        if (!$this->_require($params, 'enable')) return FALSE;
+        if (!$this->_require($params, 'condition')) return FALSE;
         $jobname = $params['jobname'];
 
-        $result = $this->scheduler->update_scheduler($jobname, $params['oldsetting'], $params['newsetting']);
+        $result = $this->scheduler->update_scheduler($jobname, $params['uuid'], array(
+            'enable' => $params['enable'],
+            'condition' => $params['condition'],
+        ));
         return $this->_echo_result($result);
     }
 
     private function command_scheduler_get($params)
     {
         if (!$this->_require($params, 'jobname')) return FALSE;
+        if (!$this->_require($params, 'uuid')) return FALSE;
         $jobname = $params['jobname'];
 
-        $result = $this->scheduler->get_scheduler($jobname);
+        $result = $this->scheduler->get_scheduler($jobname, $params['uuid']);
+        return $this->_echo_result($result, $result === FALSE ? NULL : $result);
+    }
+
+    private function command_scheduler_getall($params)
+    {
+        $result = $this->scheduler->get_all_schedulers();
         return $this->_echo_result($result, $result === FALSE ? NULL : $result);
     }
 
     private function command_scheduler_getlog($params)
     {
         if (!$this->_require($params, 'jobname')) return FALSE;
+        if (!$this->_require($params, 'uuid')) return FALSE;
         $jobname = $params['jobname'];
 
-        $result = $this->scheduler->get_log($jobname);
+        $result = $this->scheduler->get_log($jobname, $uuid);
         return $this->_echo_result($result, $result === FALSE ? NULL : $result);
     }
 
