@@ -98,17 +98,18 @@ Class Backend
 - array auth_update($username, $setting)                         (auth插件) 更新用户信息
 - array auth_get($username, $setting)                            (auth插件) 查询单个用户信息
 - array auth_getall($setting)                                    (auth插件) 查询所有用户信息
-- array logexplorer_listdir($jobname, $setting)                         (logexplorer插件) 查询进程的日志目录列表
-- array logexplorer_listfile($jobname, $dirname, $setting)              (logexplorer插件) 查询进程某个日志目录下的日志列表
-- array logexplorer_get($jobname, $dirname, $filename, $setting)        (logexplorer插件) 读取进程某个日志文件内容
-- array logexplorer_serverlistdir($setting)                             (logexplorer插件) 查询服务器的日志目录列表
-- array logexplorer_serverlistfile($dirname, $setting)                  (logexplorer插件) 查询服务器某个日志目录下的日志列表
-- array logexplorer_serverget($dirname, $filename, $setting)            (logexplorer插件) 读取服务器日志文件内容
-- array scheduler_add($jobname, $setting)                               (scheduler插件) 添加新的进程调度配置
-- array scheduler_delete($jobname, $setting)                            (scheduler插件) 删除进程调度配置
-- array scheduler_update($jobname, $oldsetting, $newsetting, $setting)  (scheduler插件) 更新进程调度配置
-- array scheduler_get($jobname, $setting)                               (scheduler插件) 查询进程调度配置信息
-- array scheduler_getlog($jobname, $setting)                            (scheduler插件) 查询进程调度执行历史
+- array logexplorer_listdir($jobname, $setting)                  (logexplorer插件) 查询进程的日志目录列表
+- array logexplorer_listfile($jobname, $dirname, $setting)       (logexplorer插件) 查询进程某个日志目录下的日志列表
+- array logexplorer_get($jobname, $dirname, $filename, $setting) (logexplorer插件) 读取进程某个日志文件内容
+- array logexplorer_serverlistdir($setting)                      (logexplorer插件) 查询服务器的日志目录列表
+- array logexplorer_serverlistfile($dirname, $setting)           (logexplorer插件) 查询服务器某个日志目录下的日志列表
+- array logexplorer_serverget($dirname, $filename, $setting)     (logexplorer插件) 读取服务器日志文件内容
+- array scheduler_add($jobname, $setting)                        (scheduler插件) 添加新的进程调度配置
+- array scheduler_delete($jobname, $uuid, $setting)              (scheduler插件) 删除进程调度配置
+- array scheduler_update($jobname, $uuid, $setting)              (scheduler插件) 更新进程调度配置
+- array scheduler_get($jobname, $uuid, $setting)                 (scheduler插件) 查询进程调度配置信息
+- array scheduler_getall($setting)                               (scheduler插件) 查询所有的进程调度配置信息
+- array scheduler_getlog($jobname, $uuid, $setting)              (scheduler插件) 查询进程调度执行历史
 ```
 
 ## 客户端类参考
@@ -875,20 +876,20 @@ print_r($result['data']);
          - password  密码
 
 ###### 返回
-    array('code'=>$code)
+    array('code'=>$code, 'data'=>$data)
        - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        新创建的进程调度配置的UUID
 
 
 #### scheduler_delete - 删除进程调度配置
 
 ###### 定义
-    array scheduler_delete($jobname, $setting)
+    array scheduler_delete($jobname, $uuid, $setting)
 
 ###### 参数
     $jobname         进程名
+    $uuid            进程调度配置的UUID
     $setting         程序执行设置，已知参数如下：
-       - enable      是否立即开启调度
-       - condition   调度时间条件设置
        - auth        auth插件参数
          - username  用户名
          - password  密码
@@ -901,17 +902,14 @@ print_r($result['data']);
 #### scheduler_update - 更新进程调度配置
 
 ###### 定义
-    array scheduler_update($jobname, $oldsetting, $newsetting, $setting)
+    array scheduler_update($jobname, $uuid, $setting)
 
 ###### 参数
     $jobname         进程名
-    $oldsetting      旧的进程调度配置信息
-       - enable      是否立即开启调度
-       - condition   调度时间条件设置
-    $newsetting      新的进程调度配置信息
-       - enable      是否立即开启调度
-       - condition   调度时间条件设置
+    $uuid            进程调度配置的UUID
     $setting         程序执行设置，已知参数如下：
+       - enable      是否立即开启调度
+       - condition   调度时间条件设置
        - auth        auth插件参数
          - username  用户名
          - password  密码
@@ -924,10 +922,28 @@ print_r($result['data']);
 #### scheduler_get - 查询进程调度配置信息
 
 ###### 定义
-    array scheduler_get($jobname, $setting)
+    array scheduler_get($jobname, $uuid, $setting)
 
 ###### 参数
     $jobname         进程名
+    $uuid            进程调度配置的UUID
+    $setting         程序执行设置，已知参数如下：
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+
+###### 返回
+    array('code'=>$code, 'data'=>$data)
+       - code        'OK', 'FAILED', 'DENIED'（auth插件）
+       - data        进程调度配置信息列表
+
+
+#### scheduler_getall - 查询所有的进程调度配置信息
+
+###### 定义
+    array scheduler_getall($setting)
+
+###### 参数
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
@@ -942,10 +958,11 @@ print_r($result['data']);
 #### scheduler_getlog - 查询进程调度执行历史
 
 ###### 定义
-    array scheduler_getlog($jobname, $setting)
+    array scheduler_getlog($jobname, $uuid, $setting)
 
 ###### 参数
     $jobname         进程名
+    $uuid            进程调度配置的UUID
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名

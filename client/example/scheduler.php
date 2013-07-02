@@ -11,8 +11,5 @@ $result = $be->scheduler_add('test', array(
 ));
 print_r($result);
 
-$result = $be->scheduler_get('test');
-print_r($result);
-
-$result = $be->scheduler_getlog('test');
+$result = $be->scheduler_getall();
 print_r($result);
