@@ -36,6 +36,7 @@ Class Backend
      *    - buffersize  缓冲区行数
      *    - writelog    是否将进程输出写入日志
      *    - autostart   是否随服务器启动（autostart插件参数）
+     *    - guard       是否监控该进程，非人为退出后自动启动（guarder插件参数）
      *    - auth        auth插件参数
      *      - username  用户名
      *      - password    密码
