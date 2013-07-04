@@ -107,7 +107,7 @@ class GuarderPlugin
             $pid = isset($pids[$jobname]) ? $pids[$jobname] : FALSE;
             if (!$pid || !$this->server->process_exists($pid))
             {
-                $this->server->server_echo(getmypid()."[guarder] starting \"{$jobname}\"...");
+                $this->server->server_echo("[guarder] starting \"{$jobname}\"...");
                 $this->server->command_start(array('jobname'=>$jobname, 'newline'=>FALSE));
             }
         }
