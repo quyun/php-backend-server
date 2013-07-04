@@ -152,6 +152,7 @@ class SchedulerPlugin
             $node_info = explode(':', $schedule_node);
             $uuid = array_pop($node_info);
             $jobname = implode(':', $node_info);
+            $this->server->server_echo("[scheduler] starting \"{$jobname}\"...");
             $this->server->command_start(array('jobname'=>$jobname, 'newline'=>FALSE));
 
             // 写日志
@@ -163,7 +164,7 @@ class SchedulerPlugin
     // 根据调度配置信息确定保存的时间格式
     private function _get_time_format($fields)
     {
-        $group = $this->detect_group($fields);
+        $group = $this->scheduler->detect_group($fields);
 
         if (in_array('d', $group))
         {
@@ -195,7 +196,7 @@ class SchedulerPlugin
             );
         }
 
-        $minfield = $this->get_min_field($fields, $group);
+        $minfield = $this->scheduler->get_min_field($fields, $group);
 
         return $time_formats[$minfield];
     }
@@ -210,12 +211,33 @@ class SchedulerPlugin
             {
                 if ($scheduler['enable'])
                 {
+                    $schedule_node = "{$jobname}:{$uuid}";
                     $condition = $scheduler['condition'];
+
+                    // 从日志中取出上次执行时间
+                    $log = $this->scheduler->get_log($jobname, $uuid);
+                    if (isset($log[0]))
+                    {
+                        $time_format = $this->_get_time_format(array_keys($condition));
+                        $timestr = date($time_format, $log[0]);
+                        $this->schedule_lasttimes[$schedule_node] = $log[0];
+                    }
+
                     foreach ($condition as $field=>$value)
                     {
-                        $schedule_node = "{$jobname}:{$uuid}";
                         $this->schedule_list[$field][$value][] = $schedule_node;
                         $this->time_field_schedules[$field][] = $schedule_node;
+                        if ($field == 'U' && isset($log[0]))
+                        {
+                            if (!isset($this->schedule_list['U'][$value]['last']))
+                            {
+                                $this->schedule_list['U'][$value]['last'] = $log[0];
+                            }
+                            else
+                            {
+                                $this->schedule_list['U'][$value]['last'] = max($this->schedule_list['U'][$value]['last'], $log[0]);
+                            }
+                        }
                     }
                 }
             }   
