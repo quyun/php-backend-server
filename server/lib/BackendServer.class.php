@@ -639,7 +639,7 @@ class BackendServer
             $this->server_echo("FAILED. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
-
+// TODO: 回调
         if ($this->command_stop(array('jobname'=>$jobname, 'is_restart'=>TRUE)))
         {
             return $this->command_start(array('jobname'=>$jobname));
@@ -749,9 +749,7 @@ class BackendServer
         {
             $usages[$jobname] = $this->memory_get_usage($pid);
         }
-        $this->client_return(json_encode($usages));
-        
-        return $usages;
+        $this->client_return('OK', json_encode($usages));
     }
 
     // 读取服务器输出缓冲区
