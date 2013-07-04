@@ -129,8 +129,10 @@ class SharedMemory
         {
             $varkey = $this->_gen_key($varname);
             if ($autolock) sem_acquire($this->sem);
-            if (!shm_has_var($this->shm_id, $varkey)) return TRUE;
-            $result = shm_remove_var($this->shm_id, $varkey);
+            if (!shm_has_var($this->shm_id, $varkey))
+                $result = TRUE;
+            else
+                $result = shm_remove_var($this->shm_id, $varkey);
             if ($autolock) sem_release($this->sem);
             return $result;
         }
