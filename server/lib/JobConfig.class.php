@@ -48,6 +48,7 @@ class JobConfig
         $jobs = $this->_get();
         if ($jobs === FALSE) return FALSE;
 
+        if (!isset($jobs[$jobname])) return FALSE;
         unset($jobs[$jobname]);
 
         return $this->_set($jobs);

@@ -386,7 +386,20 @@ class BackendServer
         $this->shm->remove_var('ob_'.$this->jobname, TRUE);
         $this->shm_process_deletepid($this->jobname);
 
-        return $this->config->delete($jobname);
+        $rt = $this->config->delete($jobname);
+        if ($rt)
+        {
+            $this->client_return('OK');
+            $this->server_echo('OK');
+            return TRUE;
+        }
+        else
+        {
+            $this->client_return('FAILED');
+            $this->server_echo('FAILED');
+            return FALSE;
+        }
+        return $rt;
     }
 
     // 更新进程配置信息
