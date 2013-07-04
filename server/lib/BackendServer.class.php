@@ -529,7 +529,7 @@ class BackendServer
         $this->jobname = $jobname;
         $this->writelog = $writelog;
         $this->buffersize = $buffersize;
-        $newline = (isset($params['newline']) && $params['newline']);
+        $newline = !isset($params['newline']) ? TRUE : $params['newline'];
 
         if (ProcessContainer::dup2_available())
         {
@@ -591,6 +591,7 @@ class BackendServer
     public function command_stop($params)
     {
         $jobname = $params['jobname'];
+        $newline = !isset($params['newline']) ? TRUE : $params['newline'];
 
         // 是否是重启进程，如果是，则SOCKET不输出
         $is_restart = (isset($params['is_restart']) && $params['is_restart']);
@@ -622,7 +623,7 @@ class BackendServer
         {
             $this->client_return('OK');
         }
-        $this->server_echo('OK');
+        $this->server_echo('OK', $newline);
         
         return TRUE;
     }
@@ -639,16 +640,20 @@ class BackendServer
             $this->server_echo("FAILED. (process \"$jobname\" does not exist.)");
             return FALSE;
         }
-// TODO: 回调
-        if ($this->command_stop(array('jobname'=>$jobname, 'is_restart'=>TRUE)))
-        {
-            return $this->command_start(array('jobname'=>$jobname));
-        }
-        else
+
+        $this->server_echo('Stopping "'.$jobname.'"...');
+        if (!$this->command_stop(array('jobname'=>$jobname, 'is_restart'=>TRUE, 'newline'=>FALSE)))
         {
             $this->client_return('FAILED');
             return FALSE;
         }
+        
+        // 等待进程完全退出
+        $this->server_echo('Process "'.$jobname.'" exiting...');
+        while ($this->shm_process_getpid($jobname)) sleep(1);
+
+        $this->server_echo('Starting "'.$jobname.'"...');
+        return $this->command_start(array('jobname'=>$jobname, 'newline'=>FALSE));
     }
 
     // 查看进程状态
