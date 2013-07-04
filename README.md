@@ -91,6 +91,7 @@ Class Backend
 - array memall($setting)                        查询所有进程的内存使用量
 - array servermem($setting)                     查询进程服务器的内存使用量
 - array serverread($setting)                    读取进程服务器的输出
+- void set_auth($username, $password)                            (auth插件) 设置用户名/密码
 - array auth_getenable($setting)                                 (auth插件) 获取是否启用身份验证
 - array auth_setenable($enable, $setting)                        (auth插件) 设置身份验证启用/禁用
 - array auth_add($username, $password, $privileges, $setting)    (auth插件) 添加用户
@@ -624,6 +625,32 @@ $be = new Backend();
 */
 $result = $be->serverread();
 print_r($result['data']);
+```
+
+
+#### set_auth - 设置用户名/密码
+
+###### 定义
+    void set_auth($username, $password)
+
+###### 参数
+    $username        用户名
+    $password        密码
+
+###### 说明
+    set_auth 设置用户名/密码后，之后的请求参数中就不需要在参数中指定用户名和密码了。
+
+###### 返回
+    无返回值。
+
+###### 示例
+
+```php
+<?php
+require_once('Backend.class.php');
+
+$be = new Backend();
+$be->set_auth('username', 'password');
 ```
 
 

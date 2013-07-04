@@ -13,6 +13,7 @@ Class Backend
         // 默认设置
         $this->server_ip = '127.0.0.1';
         $this->server_port = 13123;
+        $this->auth_setting = array();
     }
 
     /*
@@ -47,7 +48,7 @@ Class Backend
      */
     public function add($jobname, $command, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
             'command' => $command,
         ));
@@ -71,7 +72,7 @@ Class Backend
      */
     public function delete($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('DELETE', $p);
@@ -100,7 +101,7 @@ Class Backend
      */
     public function update($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('UPDATE', $p);
@@ -124,7 +125,7 @@ Class Backend
      */
     public function get($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('GET', $p);
@@ -147,7 +148,8 @@ Class Backend
      */
     public function getall($setting=array())
     {
-        return $this->_cmd('GETALL', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('GETALL', $p);
     }
     
     /*
@@ -166,7 +168,7 @@ Class Backend
      */
     public function start($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('START', $p);
@@ -189,7 +191,7 @@ Class Backend
      */
     public function stop($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('STOP', $p);
@@ -211,7 +213,7 @@ Class Backend
      */
     public function restart($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('RESTART', $p);
@@ -234,7 +236,7 @@ Class Backend
      */
     public function status($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('STATUS', $p);
@@ -257,7 +259,8 @@ Class Backend
      */
     public function statusall($setting=array())
     {
-        return $this->_cmd('STATUSALL', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('STATUSALL', $p);
     }
     
     /*
@@ -277,7 +280,7 @@ Class Backend
      */
     public function read($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
     	return $this->_cmd('READ', $p);
@@ -300,7 +303,7 @@ Class Backend
      */
     public function mem($jobname, $setting=array())
     {
-    	$p = array_merge($setting, array(
+    	$p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('MEM', $p);
@@ -323,7 +326,8 @@ Class Backend
      */
     public function memall($setting=array())
     {
-        return $this->_cmd('MEMALL', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('MEMALL', $p);
     }
     
     /*
@@ -343,7 +347,8 @@ Class Backend
      */
     public function servermem($setting=array())
     {
-        return $this->_cmd('SERVERMEM', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('SERVERMEM', $p);
     }
     
     /*
@@ -363,7 +368,21 @@ Class Backend
      */
     public function serverread($setting=array())
     {
-        return $this->_cmd('SERVERREAD', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('SERVERREAD', $p);
+    }
+
+    /*
+     * 初始化用户名/密码
+     */
+    public function set_auth($username, $password)
+    {
+        $this->auth_setting = array(
+            'auth' => array(
+                'username' => $username,
+                'password' => $password,
+            )
+        );
     }
     
     /*
@@ -383,7 +402,8 @@ Class Backend
      */
     public function auth_getenable($setting=array())
     {
-        return $this->_cmd('AUTH.GETENABLE', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('AUTH.GETENABLE', $p);
     }
     
     /*
@@ -403,7 +423,7 @@ Class Backend
      */
     public function auth_setenable($enable, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'enable' => $enable,
         ));
         return $this->_cmd('AUTH.SETENABLE', $p);
@@ -429,7 +449,7 @@ Class Backend
      */
     public function auth_add($username, $password, $privileges, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'username' => $username,
             'password' => $password,
             'privileges' => $privileges,
@@ -454,7 +474,7 @@ Class Backend
      */
     public function auth_delete($username, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'username' => $username,
         ));
         return $this->_cmd('AUTH.DELETE', $p);
@@ -480,7 +500,7 @@ Class Backend
      */
     public function auth_update($username, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'username' => $username,
         ));
         return $this->_cmd('AUTH.UPDATE', $p);
@@ -504,7 +524,7 @@ Class Backend
      */
     public function auth_get($username, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'username' => $username,
         ));
         return $this->_cmd('AUTH.GET', $p);
@@ -527,7 +547,8 @@ Class Backend
      */
     public function auth_getall($setting=array())
     {
-        return $this->_cmd('AUTH.GETALL', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('AUTH.GETALL', $p);
     }
 
     /*
@@ -548,7 +569,7 @@ Class Backend
      */
     public function logexplorer_listdir($jobname, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('LOGEXPLORER.LISTDIR', $p);
@@ -573,7 +594,7 @@ Class Backend
      */
     public function logexplorer_listfile($jobname, $dirname, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
             'dirname' => $dirname,
         ));
@@ -600,7 +621,7 @@ Class Backend
      */
     public function logexplorer_get($jobname, $dirname, $filename, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
             'dirname' => $dirname,
             'filename' => $filename,
@@ -625,7 +646,8 @@ Class Backend
      */
     public function logexplorer_serverlistdir($setting=array())
     {
-        return $this->_cmd('LOGEXPLORER.SERVERLISTDIR', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('LOGEXPLORER.SERVERLISTDIR', $p);
     }
 
     /*
@@ -646,7 +668,7 @@ Class Backend
      */
     public function logexplorer_serverlistfile($dirname, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'dirname' => $dirname,
         ));
         return $this->_cmd('LOGEXPLORER.SERVERLISTFILE', $p);
@@ -671,7 +693,7 @@ Class Backend
      */
     public function logexplorer_serverget($dirname, $filename, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'dirname' => $dirname,
             'filename' => $filename,
         ));
@@ -697,7 +719,7 @@ Class Backend
      */
     public function scheduler_add($jobname, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('SCHEDULER.ADD', $p);
@@ -722,7 +744,7 @@ Class Backend
      */
     public function scheduler_delete($jobname, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
         ));
         return $this->_cmd('SCHEDULER.DELETE', $p);
@@ -748,7 +770,7 @@ Class Backend
      */
     public function scheduler_update($jobname, $uuid, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
             'uuid' => $uuid,
         ));
@@ -774,7 +796,7 @@ Class Backend
      */
     public function scheduler_get($jobname, $uuid, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
             'uuid' => $uuid,
         ));
@@ -798,7 +820,8 @@ Class Backend
      */
     public function scheduler_getall($setting=array())
     {
-        return $this->_cmd('SCHEDULER.GETALL', $setting);
+        $p = array_merge($this->auth_setting, $setting);
+        return $this->_cmd('SCHEDULER.GETALL', $p);
     }
 
     /*
@@ -820,7 +843,7 @@ Class Backend
      */
     public function scheduler_getlog($jobname, $uuid, $setting=array())
     {
-        $p = array_merge($setting, array(
+        $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
             'uuid' => $uuid,
         ));
