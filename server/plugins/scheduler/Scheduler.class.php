@@ -23,6 +23,7 @@ class Scheduler
         {
             mkdir($this->log_path, 0777);
         }
+        $this->log_path = realpath($this->log_path);
     }
 
     public function add_scheduler($jobname, $setting)
@@ -48,8 +49,6 @@ class Scheduler
 
     public function delete_scheduler($jobname, $uuid)
     {
-        if (!$this->_check_setting($setting)) return FALSE;
-
         $config = $this->_get();
         $schedulers = isset($config[$jobname]) ? $config[$jobname] : array();
         if (!$schedulers) return FALSE;
@@ -62,7 +61,7 @@ class Scheduler
 
     public function update_scheduler($jobname, $uuid, $setting)
     {
-        if (!$this->_check_setting($setting)) return FALSE;
+        if (isset($setting['condition']) && !$this->_check_setting($setting)) return FALSE;
 
         $config = $this->_get();
         $schedulers = isset($config[$jobname]) ? $config[$jobname] : array();
@@ -70,7 +69,7 @@ class Scheduler
 
         if (!isset($schedulers[$uuid])) return FALSE;
 
-        $schedulers[$uuid] = $newsetting;
+        $schedulers[$uuid] = array_merge($schedulers[$uuid], $setting);
         $config[$jobname] = $schedulers;
         return $this->_set($config);
     }
