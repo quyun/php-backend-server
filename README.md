@@ -735,7 +735,13 @@ $be->set_auth('username', 'password');
 
 ###### 参数
     $username        用户名
-    $setting         程序执行设置，同 add
+    $setting         程序执行设置&更多用户配置
+       - password    密码
+       - privileges  权限，用逗号分隔，*表示所有权限
+       - auth        auth插件参数
+         - username  用户名
+         - password  密码
+       剩余值将作为用户配置项
 
 ###### 返回
     array('code'=>$code)
@@ -748,7 +754,7 @@ $be->set_auth('username', 'password');
     array auth_get($username, $setting)
 
 ###### 参数
-    $jobname         要查看的进程的名称
+    $username        用户名
     $setting         程序执行设置，已知参数如下：
        - auth        auth插件参数
          - username  用户名
