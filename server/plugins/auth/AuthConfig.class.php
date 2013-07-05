@@ -97,6 +97,7 @@ class AuthConfig
         $config = $this->_get();
         if ($config === FALSE) return FALSE;
 
+        if (!isset($config['users'][$username])) return FALSE;
         unset($config['users'][$username]);
 
         return $this->_set($config);
