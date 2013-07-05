@@ -263,7 +263,7 @@ class SchedulerPlugin
         $jobname = $params['jobname'];
 
         $result = $this->scheduler->add_scheduler($jobname, array(
-            'enable' => $params['enable'],
+            'enable' => $params['enable'] ? TRUE : FALSE,
             'condition' => $params['condition'],
         ));
         return $this->_echo_result($result, $result === FALSE ? NULL : $result);
@@ -283,14 +283,13 @@ class SchedulerPlugin
     {
         if (!$this->_require($params, 'jobname')) return FALSE;
         if (!$this->_require($params, 'uuid')) return FALSE;
-        if (!$this->_require($params, 'enable')) return FALSE;
-        if (!$this->_require($params, 'condition')) return FALSE;
         $jobname = $params['jobname'];
 
-        $result = $this->scheduler->update_scheduler($jobname, $params['uuid'], array(
-            'enable' => $params['enable'],
-            'condition' => $params['condition'],
-        ));
+        $setting = array();
+        if (isset($params['enable'])) $setting['enable'] = $params['enable'] ? TRUE : FALSE;
+        if (isset($params['condition'])) $setting['condition'] = $params['condition'];
+
+        $result = $this->scheduler->update_scheduler($jobname, $params['uuid'], $setting);
         return $this->_echo_result($result);
     }
 
@@ -316,7 +315,7 @@ class SchedulerPlugin
         if (!$this->_require($params, 'uuid')) return FALSE;
         $jobname = $params['jobname'];
 
-        $result = $this->scheduler->get_log($jobname, $uuid);
+        $result = $this->scheduler->get_log($jobname, $params['uuid']);
         return $this->_echo_result($result, $result === FALSE ? NULL : $result);
     }
 
