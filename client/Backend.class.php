@@ -731,6 +731,7 @@ Class Backend
      *
      * 参数：
      * $jobname         进程名
+     * $uuid            进程调度配置的UUID
      * $setting         程序执行设置
      *    - enable      是否立即开启调度
      *    - condition   调度时间条件设置
@@ -743,10 +744,11 @@ Class Backend
      *    - code        'OK', 'FAILED', 'DENIED'（auth插件）
      *
      */
-    public function scheduler_delete($jobname, $setting=array())
+    public function scheduler_delete($jobname, $uuid, $setting=array())
     {
         $p = array_merge($this->auth_setting, $setting, array(
             'jobname' => $jobname,
+            'uuid' => $uuid,
         ));
         return $this->_cmd('SCHEDULER.DELETE', $p);
     }
