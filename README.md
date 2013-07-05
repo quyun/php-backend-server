@@ -902,8 +902,8 @@ $be->set_auth('username', 'password');
 ###### 参数
     $jobname         进程名
     $setting         程序执行设置，已知参数如下：
-     - enable      是否立即开启调度
-     - condition   调度时间条件设置
+       - enable      是否立即开启调度
+       - condition   调度时间条件设置
        - auth        auth插件参数
          - username  用户名
          - password  密码
