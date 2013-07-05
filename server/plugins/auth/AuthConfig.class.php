@@ -149,7 +149,7 @@ class AuthConfig
         $config = $this->_get();
         if ($config === FALSE) return FALSE;
 
-        if (!isset($jobs[$jobname])) return FALSE;
+        if (!isset($config['users'][$username])) return FALSE;
         return $config['users'][$username];
     }
     
