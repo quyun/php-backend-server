@@ -95,13 +95,14 @@ class ProcessContainer
             $process = proc_open($cmd, $descriptorspec, $pipes, dirname($this->process_path));
             if (!is_resource($process)) return FALSE;
 
-            $status = proc_get_status($process);   
+            $status = proc_get_status($process);
             $this->process_pid = $status['pid'];
 
             // 关闭输入
             fclose($pipes[0]);
             $this->process_stdout = $pipes[1];
             $this->process_stderr = $pipes[2];
+            $this->process = $process;
 
             return TRUE;
         }
@@ -155,6 +156,16 @@ class ProcessContainer
      */
     public function loop_read()
     {
+        // 检测子进程是否已退出
+        if (!$this->is_alive($this->process_pid))
+        {
+            // 关闭输出
+            @fclose($this->process_stdout);
+            pcntl_waitpid($this->process_pid, $status);
+            if ($this->exit_handler) call_user_func($this->exit_handler, $status);
+            return;
+        }
+
         // 非阻塞模式读取
         stream_set_blocking($this->process_stdout, 0);
         stream_set_blocking($this->process_stderr, 0);
