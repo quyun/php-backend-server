@@ -754,7 +754,7 @@ class BackendServer
         {
             $usages[$jobname] = $this->memory_get_usage($pid);
         }
-        $this->client_return('OK', json_encode($usages));
+        $this->client_return('OK', $usages);
     }
 
     // 读取服务器输出缓冲区
