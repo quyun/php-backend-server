@@ -92,10 +92,10 @@ class ProcessContainer
                 2 => array("pipe", "w"),
             );
 
-            $process = $this->proc_open($cmd, $descriptorspec, $pipes, dirname($this->process_path));
+            $process = proc_open($cmd, $descriptorspec, $pipes, dirname($this->process_path));
             if (!is_resource($process)) return FALSE;
 
-            $status = proc_get_status($resource);   
+            $status = proc_get_status($process);   
             $this->process_pid = $status['pid'];
 
             // 关闭输入
