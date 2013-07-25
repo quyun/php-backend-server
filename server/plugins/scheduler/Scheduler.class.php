@@ -74,10 +74,10 @@ class Scheduler
         return $this->_set($config);
     }
 
-    public function get_scheduler($jobname)
+    public function get_scheduler($jobname, $uuid)
     {
         $config = $this->_get();
-        $schedulers = isset($config[$jobname]) ? $config[$jobname] : array();
+        $schedulers = isset($config[$jobname][$uuid]) ? $config[$jobname][$uuid] : array();
         if (!$schedulers) return FALSE;
         return $schedulers;
     }
