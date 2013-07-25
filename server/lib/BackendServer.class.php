@@ -345,14 +345,16 @@ class BackendServer
         $command = $params['command'];
         $cmdparams = isset($params['params']) ? $params['params'] : '';
         $buffersize = isset($params['buffersize']) ? $params['buffersize'] : 20;
-        $writelog = isset($params['writelog']) ? $params['writelog'] : FALSE;
+        $writelog = isset($params['writelog']) && $params['writelog'] ? TRUE : FALSE;
+        // extend options
+        unset($params['command'], $params['params'], $params['buffersize'], $params['writelog']);
 
-        $rt = $this->config->add($jobname, array(
+        $rt = $this->config->add($jobname, array_merge($params, array(
             'command' => $command,
             'params' => $cmdparams,
             'buffersize' => $buffersize,
             'writelog' => $writelog,
-        ));
+        )));
 
         if ($rt)
         {

@@ -9,7 +9,7 @@
 class GuarderPlugin
 {
     private $server = NULL;                 // 后台进程服务器对象
-    private $gurading_jobnames = array();   // 受监控的进程名称列表，以进程名为键，值固定为TRUE
+    private $guarding_jobnames = array();   // 受监控的进程名称列表，以进程名为键，值固定为TRUE
     private $check_interval = FALSE;        // 检测间隔时间
 
     public function __construct($server, $setting)
@@ -53,7 +53,7 @@ class GuarderPlugin
         switch ($cmd)
         {
             case 'STOP':
-                unset($this->gurading_jobnames[$jobname]);
+                unset($this->guarding_jobnames[$jobname]);
                 break;
         }
         return TRUE;
@@ -72,13 +72,13 @@ class GuarderPlugin
             case 'RESTART':
             case 'UPDATE':
                 if ($job['guard'])
-                    $this->gurading_jobnames[$jobname] = TRUE;
+                    $this->guarding_jobnames[$jobname] = TRUE;
                 else
-                    unset($this->gurading_jobnames[$jobname]);
+                    unset($this->guarding_jobnames[$jobname]);
                 break;
 
             case 'DELETE':
-                unset($this->gurading_jobnames[$jobname]);
+                unset($this->guarding_jobnames[$jobname]);
                 break;
         }
         return TRUE;
@@ -94,7 +94,7 @@ class GuarderPlugin
         {
             if (isset($jobs[$jobname]['guard']) && $jobs[$jobname]['guard']
                 && $this->server->process_exists($pid))
-            $this->gurading_jobnames[$jobname] = TRUE;
+            $this->guarding_jobnames[$jobname] = TRUE;
         }
     }
 
@@ -102,7 +102,7 @@ class GuarderPlugin
     {
         $pids = $this->server->shm->get_var('pids');
 
-        foreach ($this->gurading_jobnames as $jobname=>$dummy)
+        foreach ($this->guarding_jobnames as $jobname=>$dummy)
         {
             $pid = isset($pids[$jobname]) ? $pids[$jobname] : FALSE;
             if (!$pid || !$this->server->process_exists($pid))
